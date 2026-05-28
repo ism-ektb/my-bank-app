@@ -1,2 +1,4 @@
 rootProject.name = 'my-bank-app'
 include ("my-bank-front-app")
+include("my-bank-account-app")
+include("my-bank-gateway")
