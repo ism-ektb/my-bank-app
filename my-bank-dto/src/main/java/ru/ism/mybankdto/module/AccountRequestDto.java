@@ -1,4 +1,4 @@
-package ru.ism.mybankfrontapp.model;
+package ru.ism.mybankdto.module;
 
 import java.time.LocalDate;
 

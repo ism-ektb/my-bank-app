@@ -1,0 +1,25 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: my-bank-notification-app
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/bank-realm
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+
+
+logging:
+  level:
+    root: INFO
+
+

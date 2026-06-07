@@ -1,0 +1,38 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: my-bank-cash-app
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/bank-realm
+      client:
+        registration:
+          cash-app:
+            provider: keycloak
+            client-id: cash-app
+            client-secret: leg32FuT56JrueQoozhZ0V9WWI9uWhku
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/bank-realm
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+bank:
+  accounts-service:
+    base-url: http://localhost:8083
+
+logging:
+  level:
+    root: INFO
+    org.springframework:
+      security: trace
+

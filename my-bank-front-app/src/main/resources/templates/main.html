@@ -13,6 +13,9 @@
         <span th:text="${error}"/>
     </div>
     <div class="alert alert-success" role="alert" th:if="${info!=null}" th:text="${info}"/>
+    <div class="float-end">
+        <a href="/logout" > Выйти из аккаунта </a>
+    </div>
     <div class="container p-2">
         <div class="row p-2">
             <div class="col">
@@ -46,6 +49,9 @@
                                 <p>
                                     <input type="date" class="form-control" name="birthdate" id="birthdate" th:value="${birthdate}" required>
                                 </p>
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
                             </div>
                             <div class="form-group">
                                 <h6>Сумма на счету, руб</h6>
@@ -72,6 +78,9 @@
                                 <p>
                                     <input type="number" class="form-control" id="cash_value" name="value" placeholder="100" required>
                                 </p>
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
                             </div>
                             <button type="submit" class="btn btn-secondary" name="action" value="PUT">Положить</button>
                             <button type="submit" class="btn btn-secondary" name="action" value="GET">Снять</button>
@@ -105,6 +114,9 @@
                                 <p>
                                     <input type="text" class="form-control" name="value" id="transfer_value" placeholder="100" required>
                                 </p>
+                                <input type="hidden"
+                                          th:name="${_csrf.parameterName}"
+                                          th:value="${_csrf.token}"/>
                             </div>
                             <button type="submit" class="btn btn-secondary">Перевести</button>
                         </form>

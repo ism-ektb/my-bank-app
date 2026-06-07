@@ -3,14 +3,15 @@ package ru.ism.mybankfrontapp.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+import ru.ism.mybankdto.module.Action;
 import ru.ism.mybankfrontapp.client.TransferClient;
-import ru.ism.mybankfrontapp.model.AccountResponseDto;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+
 
 /**
  * Контроллер main.html.
@@ -44,8 +45,13 @@ public class MainController {
      * Редирект на GET /account
      */
     @GetMapping
-    public String index() {
+    /* public String index() {
         return "redirect:/account";
+    }
+
+     */
+    public Mono<String> index() {
+        return Mono.empty().thenReturn("redirect:/account");
     }
 
     /**
@@ -56,6 +62,7 @@ public class MainController {
      * 3. Текущего пользователя можно получить из контекста Security
      */
     @GetMapping("/account")
+    /*
     public String getAccount(Model model) {
        AccountResponseDto dto = transferClient.findAccountByLogin();
        System.out.println(dto);
@@ -63,7 +70,26 @@ public class MainController {
        model.addAttribute("sum", dto.balance());
        model.addAttribute("birthdate", dto.birthdate().format(DateTimeFormatter.ISO_DATE));
        model.addAttribute("account", dto.login());
-       return "main";
+       return "main";    }     */
+    public Mono<String> account(Model model, @RequestParam(required = false, name = "error", defaultValue = "") String error,
+                                @RequestParam(required = false, value = "info", defaultValue = "") String info) {
+        return transferClient.findAllAccounts()
+                        .collectList()
+                                .map(list -> model.addAttribute("accounts", list)).then(
+                transferClient.findAccountByLogin()
+                .map(dto -> {
+                    model.addAttribute("name", dto.name());
+                    model.addAttribute("sum", dto.balance());
+                    model.addAttribute("birthdate", dto.birthdate().format(DateTimeFormatter.ISO_DATE));
+                    model.addAttribute("account", dto.login());
+                    if (error.equals("error")) {
+                        model.addAttribute("errors", "Ошибка в выполнении операции");
+                    }
+                    if (info.equals("ok")) {
+                        model.addAttribute("info", "Операция выполнена!");
+                    }
+                    return "main";
+                }));
 
     }
 
@@ -80,7 +106,7 @@ public class MainController {
      */
 
     @PostMapping("/account")
-    public String editAccount(
+  /*  public String editAccount(
             Model model,
             @RequestParam("name") String name,
             @RequestParam("birthdate") LocalDate birthdate
@@ -93,9 +119,45 @@ public class MainController {
         model.addAttribute("account", dto.login());
         return "main";
     }
+
+   */
+    public Mono<String> editAccount(Model model, ServerWebExchange exchange
+    ) {
+        return exchange.getFormData()
+                .flatMap(formData ->
+                        transferClient.updateAccount(formData.getFirst("name"),
+                                LocalDate.parse(formData.getFirst("birthdate"))))
+                .thenReturn("redirect:/account?info=ok")
+                .onErrorReturn("redirect:/account?error=error");
+
+
+    }
+    @PostMapping("/cash")
+    public Mono<String> cashMoney(Model model, ServerWebExchange exchange){
+        return exchange.getFormData()
+                .filter(formData -> formData.getFirst("value") != null)
+                .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
+                .flatMap(data -> transferClient.cashMoney(Long.parseLong(data.getFirst("value")), Action.valueOf(data.getFirst("action"))))
+                .thenReturn("redirect:/account?info=ok")
+                .onErrorReturn("redirect:/account?error=error");
+    }
+
+    @PostMapping("/transfer")
+    public Mono<String>transferMoney(Model model, ServerWebExchange exchange){
+
+        return exchange.getFormData()
+                .map(formData ->{System.out.println(formData.getFirst("value") + "________" + formData.getFirst("login"));
+                return formData;})
+                .filter(formData -> formData.getFirst("value") != null && formData.getFirst("login") != null)
+                .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
+                .flatMap(data -> transferClient.transfer(Long.parseLong(data.getFirst("value")), data.getFirst("login")))
+                .thenReturn("redirect:/account?info=ok")
+                .onErrorReturn("redirect:/account?error=error");
+    }
+
 /*
     /**
-     * POST /cash.
+     * POST /cash.p
      * Что нужно сделать:
      * 1. Сходить в сервис cash через Gateway API для снятия/пополнения счета текущего аккаунта по REST
      * 2. Заполнить модель main.html полученными из ответа данными
