@@ -4,13 +4,12 @@ server:
 spring:
   application:
     name: my-bank-gateway
+
   security:
     oauth2:
       resourceserver:
         jwt:
-          # Адрес issuer (Keycloak realm). Gateway по нему получает ключи
-          # и параметры токена, чтобы валидировать JWT от UI
-          issuer-uri: http://localhost:8080/realms/bank-realm
+          jwk-set-uri: ${bank.keycloak-url}/protocol/openid-connect/certs
   cloud:
     gateway:
       server:
@@ -20,7 +19,7 @@ spring:
             - id: account-service
               # Куда Gateway проксирует запросы, подходящие под предикаты
               # Здесь это transfer-service
-              uri: http://localhost:8082
+              uri: ${ACCOUNT.HOST:http://localhost:8082}
               predicates:
                 # Все запросы с путём /transfers/** попадут на этот маршрут
                 - Path=/account/**
@@ -63,4 +62,10 @@ logging:
 
     org.springframework.cloud.gateway: trace
     org.springframework.security: trace
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA.URL:http://localhost:8761/eureka/}"
 
+bank:
+  keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"

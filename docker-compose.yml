@@ -1,0 +1,79 @@
+services:
+  bank-postgres:
+    image: postgres:13.3
+    container_name: bank-postgres-container
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=market
+    ports:
+      - '6432:5432'
+    volumes:
+      - /usr/users:/users
+
+  bank-keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    volumes:
+      - ./realm:/opt/keycloak/data/import
+    command: start-dev --health-enabled=true --import-realm
+    environment:
+      # Для входа в UI будут использоваться эти параметры
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      JAVA_OPTS_APPEND: "-Dkeycloak.profile.feature.scripts=enabled -Dkeycloak.profile.feature.upload_scripts=enabled"
+    ports:
+      # В нашем случае Keycloak будет запущен на локальном порту 8080
+      - "8080:8080"
+    healthcheck:
+      test: [ 'CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/health/ready' ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  front-app:
+    build: my-bank-front-app
+    container_name: bank-front-container
+    ports:
+      - "8084:8084"
+    depends_on:
+       bank-keycloak:
+         condition: service_healthy
+    environment:
+      - GATEWAY.HOST=lb://my-bank-gateway
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - EUREKA.URL=http://eureka-server:8761/eureka/
+
+  gateway-app:
+    build: my-bank-gateway
+    container_name: bank-gateway-container
+    ports:
+      - "8081:8081"
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-r
+      - EUREKA.URL=http://eureka-server:8761/eureka/
+      - ACCOUNT.HOST=http://account-app:8082
+
+  account-app:
+    build: my-bank-account-app
+    container_name: bank-account-container
+    ports:
+      - "8082:8082"
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+    environment:
+      - DATASOURCE.URL=r2dbc:postgresql://bank-postgres:5432/market
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - EUREKA.URL=http://eureka-server:8761/eureka/
+
+  eureka-app:
+    build: my-bank-eureka
+    container_name: eureka-server
+    hostname: eureka-server
+    ports:
+      - "8761:8761"
+

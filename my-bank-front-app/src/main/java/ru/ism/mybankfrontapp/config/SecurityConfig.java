@@ -42,13 +42,14 @@ public class SecurityConfig {
                 // Блок настройки авторизации запросов
                 .authorizeExchange(auth -> auth
                         // Разрешаем всем доступ к главной странице и статическим ресурсам по пути /css/**
-                        .pathMatchers("/", "/css/**").permitAll()
+                        .pathMatchers("/", "/css/**", "/actuator/**").permitAll()
                         // Все остальные запросы требуют аутентификации
                         .anyExchange().authenticated()
                 )
                 // Включаем аутентификацию через OAuth2 Login
                 // Неавторизованный пользователь будет перенаправлен на страницу логина провайдера
                 .oauth2Login(Customizer.withDefaults())
+          //      .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(new CookieServerCsrfTokenRepository())
                         .csrfTokenRequestHandler(xorHandler))
@@ -65,4 +66,5 @@ public class SecurityConfig {
         oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
         return oidcLogoutSuccessHandler;
     }
+
 }

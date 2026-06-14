@@ -3,11 +3,17 @@ server:
 
 bank:
   gateway:
-    base-url: http://localhost:8081
+    base-url: "${GATEWAY.HOST:lb://my-bank-gateway}"
+  keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
+
 
 logging:
   level:
     root: INFO
+    org.springframework:
+      security: info
+      cloud: debug
+
 
 spring:
   security:
@@ -23,7 +29,16 @@ spring:
             provider: keycloak
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/bank-realm
+            user-name-attribute: preferred_username
+            authorization-uri: "http://localhost:8080/realms/bank-realm/protocol/openid-connect/auth"
+            token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
+            user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
+            jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
 
   application:
-    name: "my-bank-front-app"
+    name: my-bank-front-app
+
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA.URL:http://localhost:8761/eureka/}"
