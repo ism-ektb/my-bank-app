@@ -1,6 +1,8 @@
 package ru.ism.mybankfrontapp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +42,19 @@ public class MainController {
     @Autowired
     private TransferClient transferClient;
 
+    @PostMapping("/logout1")
+    public Mono<String> logout(ServerWebExchange exchange, OAuth2AuthenticationToken token) {
+        String id = ((OidcUser) token.getPrincipal()).getIdToken().getTokenValue();
+
+        exchange.getResponse().getCookies().remove("SESSION");
+        return Mono.empty().thenReturn("redirect:http://localhost:8080/realms/bank-realm/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A8084%2Flogout&id_token_hint=" + id);
+    }
+
+    @GetMapping("/login?logout")
+    public Mono<String> login() {
+        return Mono.empty().thenReturn("redirect:http://localhost:8084");
+    }
+
     /**
      * GET /.
      * Редирект на GET /account
@@ -74,22 +89,22 @@ public class MainController {
     public Mono<String> account(Model model, @RequestParam(required = false, name = "error", defaultValue = "") String error,
                                 @RequestParam(required = false, value = "info", defaultValue = "") String info) {
         return transferClient.findAllAccounts()
-                        .collectList()
-                                .map(list -> model.addAttribute("accounts", list)).then(
-                transferClient.findAccountByLogin()
-                .map(dto -> {
-                    model.addAttribute("name", dto.name());
-                    model.addAttribute("sum", dto.balance());
-                    model.addAttribute("birthdate", dto.birthdate().format(DateTimeFormatter.ISO_DATE));
-                    model.addAttribute("account", dto.login());
-                    if (error.equals("error")) {
-                        model.addAttribute("errors", "Ошибка в выполнении операции");
-                    }
-                    if (info.equals("ok")) {
-                        model.addAttribute("info", "Операция выполнена!");
-                    }
-                    return "main";
-                }));
+                .collectList()
+                .map(list -> model.addAttribute("accounts", list)).then(
+                        transferClient.findAccountByLogin()
+                                .map(dto -> {
+                                    model.addAttribute("name", dto.name());
+                                    model.addAttribute("sum", dto.balance());
+                                    model.addAttribute("birthdate", dto.birthdate().format(DateTimeFormatter.ISO_DATE));
+                                    model.addAttribute("account", dto.login());
+                                    if (error.equals("error")) {
+                                        model.addAttribute("errors", "Ошибка в выполнении операции");
+                                    }
+                                    if (info.equals("ok")) {
+                                        model.addAttribute("info", "Операция выполнена!");
+                                    }
+                                    return "main";
+                                }));
 
     }
 
@@ -132,8 +147,9 @@ public class MainController {
 
 
     }
+
     @PostMapping("/cash")
-    public Mono<String> cashMoney(Model model, ServerWebExchange exchange){
+    public Mono<String> cashMoney(Model model, ServerWebExchange exchange) {
         return exchange.getFormData()
                 .filter(formData -> formData.getFirst("value") != null)
                 .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
@@ -143,11 +159,13 @@ public class MainController {
     }
 
     @PostMapping("/transfer")
-    public Mono<String>transferMoney(Model model, ServerWebExchange exchange){
+    public Mono<String> transferMoney(Model model, ServerWebExchange exchange) {
 
         return exchange.getFormData()
-                .map(formData ->{System.out.println(formData.getFirst("value") + "________" + formData.getFirst("login"));
-                return formData;})
+                .map(formData -> {
+                    System.out.println(formData.getFirst("value") + "________" + formData.getFirst("login"));
+                    return formData;
+                })
                 .filter(formData -> formData.getFirst("value") != null && formData.getFirst("login") != null)
                 .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
                 .flatMap(data -> transferClient.transfer(Long.parseLong(data.getFirst("value")), data.getFirst("login")))

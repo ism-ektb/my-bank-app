@@ -53,9 +53,9 @@ services:
       bank-keycloak:
         condition: service_healthy
     environment:
-      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-r
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
       - EUREKA.URL=http://eureka-server:8761/eureka/
-      - ACCOUNT.HOST=http://account-app:8082
+      - ACCOUNT.HOST=lb://my-bank-account-app
 
   account-app:
     build: my-bank-account-app

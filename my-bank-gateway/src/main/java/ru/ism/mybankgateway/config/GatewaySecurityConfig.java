@@ -36,4 +36,5 @@ public class GatewaySecurityConfig {
     public JwtTokenRelayGatewayFilterFactory jwtTokenRelayGatewayFilterFactory() {
         return new JwtTokenRelayGatewayFilterFactory();
     }
+
 }
