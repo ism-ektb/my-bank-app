@@ -46,34 +46,24 @@ public class SecurityConfig {
     }
 
     private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
-
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
         if (realmAccess == null) {
             return Collections.emptyList();
         }
-
         Object rolesObj = realmAccess.get("roles");
-
-        // Проверяем, что roles — это коллекция (и не падаем, если Keycloak вернул что-то иное)
         if (!(rolesObj instanceof Collection<?> rawRoles)) {
             return Collections.emptyList();
         }
-
         var roles = rawRoles.stream()
                 .filter(Objects::nonNull)
                 .map(Object::toString)
                 .toList();
-
-        // Собираем authorities в список GrantedAuthority
         var authorities = roles.stream()
                 .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
                 .collect(Collectors.toList());
-
-        // Добавляем кастомное право для бизнес-логики
         if (roles.contains("ACCOUNT_WRITE")) {
             authorities.add(new SimpleGrantedAuthority("account.write"));
         }
-
         return authorities;
     }
 }

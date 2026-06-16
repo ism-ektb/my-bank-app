@@ -1,3 +1,11 @@
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
 dependencies {
     implementation 'org.apache.groovy:groovy:5.0.0'
     testImplementation platform('org.junit:junit-bom:5.10.0')

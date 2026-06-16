@@ -9,6 +9,7 @@ allprojects {
     version = '0.0.1-SNAPSHOT'
     description = 'my-bank-app'
     repositories {
+        mavenLocal()
         mavenCentral()
         google()
         gradlePluginPortal()

@@ -6,14 +6,9 @@ bank:
     base-url: "${GATEWAY.HOST:lb://my-bank-gateway}"
   keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
 
-
 logging:
   level:
     root: INFO
-    org.springframework:
-      security: trace
-      cloud: debug
-
 
 spring:
   security:
@@ -34,13 +29,8 @@ spring:
             token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
             user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
             jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
-
   application:
     name: my-bank-front-app
-
   cloud:
     consul:
       host: "${CONSUL.HOST:localhost}"
-
-    loadbalancer:
-      enabled: true

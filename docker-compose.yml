@@ -20,10 +20,7 @@ services:
       # Для входа в UI будут использоваться эти параметры
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-
-      JAVA_OPTS_APPEND: "-Dkeycloak.profile.feature.scripts=enabled -Dkeycloak.profile.feature.upload_scripts=enabled"
     ports:
-      # В нашем случае Keycloak будет запущен на локальном порту 8080
       - "8080:8080"
     healthcheck:
       test: [ 'CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/health/ready' ]
@@ -39,6 +36,8 @@ services:
     depends_on:
        bank-keycloak:
          condition: service_healthy
+       consul-server:
+         condition: service_started
     environment:
       - GATEWAY.HOST=http://my-bank-gateway
       - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
@@ -47,11 +46,11 @@ services:
   gateway-app:
     build: my-bank-gateway
     container_name: bank-gateway-container
-    ports:
-      - "8081:8081"
     depends_on:
       bank-keycloak:
         condition: service_healthy
+      consul-server:
+        condition: service_started
     environment:
       - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
       - CONSUL.HOST=consul-server
@@ -62,23 +61,23 @@ services:
   account-app:
     build: my-bank-account-app
     container_name: bank-account-container
-    ports:
-      - "8082:8082"
     depends_on:
       bank-keycloak:
         condition: service_healthy
+      consul-server:
+        condition: service_started
     environment:
       - DATASOURCE.URL=r2dbc:postgresql://bank-postgres:5432/market
       - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
       - CONSUL.HOST=consul-server
       - NOTIFICATION.URL=http://my-bank-notification-app
+      - ACCOUNT.SECRET=A8U5u54LT3m9Besj3SV39L2E6iBh4lkU
 
   consul-server:
     image: hashicorp/consul:2.0.0
     container_name: consul-server
     ports:
       - "8500:8500"
-      - "8600:8600/udp"
     command:
       agent -dev -client=0.0.0.0
 
@@ -107,6 +106,7 @@ services:
       - CONSUL.HOST=consul-server
       - NOTIFICATION.URL=http://my-bank-notification-app
       - ACCOUNT.URL=http://my-bank-account-app
+      - CASH.SECRET=r49jp06vuDWQrAYs1fp9baivXlYOBYUz
 
   transfer-app:
     build: my-bank-transfer-app
@@ -121,3 +121,4 @@ services:
       - CONSUL.HOST=consul-server
       - NOTIFICATION.URL=http://my-bank-notification-app
       - ACCOUNT.URL=http://my-bank-account-app
+      - TRANSFER.SECRET=dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0

@@ -15,36 +15,23 @@ spring:
       server:
         webflux:
           routes:
-
             - id: account-service
               uri: ${ACCOUNT.HOST:http://localhost:8082}
               predicates:
                 - Path=/account/**
               filters:
-                # Подключаем кастомный фильтр Token Relay
-                # Он берёт JWT и добавляет заголовок Authorization к исходящему запросу
                 - name: JwtTokenRelay
             - id: cash-service
-              # Куда Gateway проксирует запросы, подходящие под предикаты
-              # Здесь это transfer-service
               uri: ${CASH.URL:http://localhost:8083}
               predicates:
-                # Все запросы с путём /transfers/** попадут на этот маршрут
                 - Path=/cash/**
               filters:
-                # Подключаем кастомный фильтр Token Relay
-                # Он берёт JWT и добавляет заголовок Authorization к исходящему запросу
                 - name: JwtTokenRelay
             - id: transfer-service
-              # Куда Gateway проксирует запросы, подходящие под предикаты
-              # Здесь это transfer-service
               uri: ${TRANSFER.URL:http://localhost:8085}
               predicates:
-                # Все запросы с путём /transfers/** попадут на этот маршрут
-                - Path=/transfer/**
+                 - Path=/transfer/**
               filters:
-                # Подключаем кастомный фильтр Token Relay
-                # Он берёт JWT и добавляет заголовок Authorization к исходящему запросу
                 - name: JwtTokenRelay
     consul:
       host: "${CONSUL.HOST:localhost}"
@@ -57,9 +44,5 @@ management:
 logging:
   level:
     root: INFO
-
-    org.springframework.cloud.gateway: trace
-    org.springframework.security: trace
-
 bank:
   keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"

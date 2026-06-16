@@ -14,7 +14,7 @@ spring:
           transfer-app:
             provider: keycloak
             client-id: transfer-app
-            client-secret: dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0
+            client-secret: ${TRANSFER.SECRET}
             authorization-grant-type: client_credentials
         provider:
           keycloak:
@@ -42,5 +42,3 @@ bank:
 logging:
   level:
     root: INFO
-
-

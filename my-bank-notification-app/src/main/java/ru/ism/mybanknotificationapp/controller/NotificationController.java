@@ -1,6 +1,5 @@
 package ru.ism.mybanknotificationapp.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +10,6 @@ import static reactor.netty.http.HttpConnectionLiveness.log;
 
 @RestController
 @RequestMapping("/notification")
-
 public class NotificationController {
 
 

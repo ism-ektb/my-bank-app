@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-import ru.ism.mybankdto.module.Transfer;
 import ru.ism.mybankdto.module.TransferRequest;
 import ru.ism.mybanktransferapp.service.TransferService;
 

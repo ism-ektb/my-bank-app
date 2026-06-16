@@ -1,5 +1,5 @@
 ext {
-    springCloudVersion = "2025.0.2"
+    springCloudVersion = "2025.0.3"
 }
 
 dependencies {

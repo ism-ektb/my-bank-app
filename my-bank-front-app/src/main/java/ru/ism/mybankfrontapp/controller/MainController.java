@@ -14,7 +14,6 @@ import ru.ism.mybankfrontapp.client.TransferClient;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-
 /**
  * Контроллер main.html.
  * <p>
@@ -38,7 +37,7 @@ import java.time.format.DateTimeFormatter;
  */
 @Controller
 public class MainController {
-    // TODO: Удалить заглушку, так как используется только для ознакомительных целей
+
     @Autowired
     private TransferClient transferClient;
 
@@ -48,38 +47,16 @@ public class MainController {
         return Mono.empty().thenReturn("redirect:http://localhost:8080/realms/bank-realm/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A8084%2Flogout&id_token_hint=" + id);
     }
 
-
     /**
      * GET /.
      * Редирект на GET /account
      */
     @GetMapping
-    /* public String index() {
-        return "redirect:/account";
-    }
-
-     */
     public Mono<String> index() {
         return Mono.empty().thenReturn("redirect:/account");
     }
 
-    /**
-     * GET /account.
-     * Что нужно сделать:
-     * 1. Сходить в сервис accounts через Gateway API для получения данных аккаунта по REST
-     * 2. Заполнить модель main.html полученными из ответа данными
-     * 3. Текущего пользователя можно получить из контекста Security
-     */
     @GetMapping("/account")
-    /*
-    public String getAccount(Model model) {
-       AccountResponseDto dto = transferClient.findAccountByLogin();
-       System.out.println(dto);
-       model.addAttribute("name", dto.name());
-       model.addAttribute("sum", dto.balance());
-       model.addAttribute("birthdate", dto.birthdate().format(DateTimeFormatter.ISO_DATE));
-       model.addAttribute("account", dto.login());
-       return "main";    }     */
     public Mono<String> account(Model model, @RequestParam(required = false, name = "error", defaultValue = "") String error,
                                 @RequestParam(required = false, value = "info", defaultValue = "") String info) {
         return transferClient.findAllAccounts()
@@ -99,47 +76,16 @@ public class MainController {
                                     }
                                     return "main";
                                 }));
-
     }
-
-    /**
-     * POST /account.
-     * Что нужно сделать:
-     * 1. Сходить в сервис accounts через Gateway API для изменения данных текущего пользователя по REST
-     * 2. Заполнить модель main.html полученными из ответа данными
-     * 3. Текущего пользователя можно получить из контекста Security
-     * <p>
-     * Изменяемые данные:
-     * 1. name - Фамилия Имя
-     * 2. birthdate - дата рождения в формате YYYY-DD-MM
-     */
 
     @PostMapping("/account")
-  /*  public String editAccount(
-            Model model,
-            @RequestParam("name") String name,
-            @RequestParam("birthdate") LocalDate birthdate
-    ) {
-        // TODO: Заменить на то, что описано в комментарии к методу
-        AccountResponseDto dto = transferClient.updateAccount(name, birthdate);
-        model.addAttribute("name", dto.name());
-        model.addAttribute("sum", dto.balance());
-        model.addAttribute("birthdate", dto.birthdate().format(DateTimeFormatter.ISO_DATE));
-        model.addAttribute("account", dto.login());
-        return "main";
-    }
-
-   */
-    public Mono<String> editAccount(Model model, ServerWebExchange exchange
-    ) {
+    public Mono<String> editAccount(ServerWebExchange exchange) {
         return exchange.getFormData()
                 .flatMap(formData ->
                         transferClient.updateAccount(formData.getFirst("name"),
                                 LocalDate.parse(formData.getFirst("birthdate"))))
                 .thenReturn("redirect:/account?info=ok")
                 .onErrorReturn("redirect:/account?error=error");
-
-
     }
 
     @PostMapping("/cash")
@@ -153,8 +99,7 @@ public class MainController {
     }
 
     @PostMapping("/transfer")
-    public Mono<String> transferMoney(Model model, ServerWebExchange exchange) {
-
+    public Mono<String> transferMoney(ServerWebExchange exchange) {
         return exchange.getFormData()
                 .filter(formData -> formData.getFirst("value") != null && formData.getFirst("login") != null)
                 .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
@@ -162,54 +107,4 @@ public class MainController {
                 .thenReturn("redirect:/account?info=ok")
                 .onErrorReturn("redirect:/account?error=error");
     }
-
-/*
-    /**
-     * POST /cash.p
-     * Что нужно сделать:
-     * 1. Сходить в сервис cash через Gateway API для снятия/пополнения счета текущего аккаунта по REST
-     * 2. Заполнить модель main.html полученными из ответа данными
-     * 3. Текущего пользователя можно получить из контекста Security
-     * <p>
-     * Параметры:
-     * 1. value - сумма списания
-     * 2. action - GET (снять), PUT (пополнить)
-     */
-    /*
-    @PostMapping("/cash")
-    public String editCash(
-            Model model,
-            @RequestParam("value") int value,
-            @RequestParam("action") CashAction action
-    ) {
-        // TODO: Заменить на то, что описано в комментарии к методу
-        accountStub.editCash(model, value, action);
-
-        return "main";
-    }
-
-    /**
-     * POST /transfer.
-     * Что нужно сделать:
-     * 1. Сходить в сервис accounts через Gateway API для перевода со счета текущего аккаунта на счет другого аккаунта по REST
-     * 2. Заполнить модель main.html полученными из ответа данными
-     * 3. Текущего пользователя можно получить из контекста Security
-     * <p>
-     * Параметры:
-     * 1. value - сумма списания
-     * 2. login - логин пользователя получателя
-     */
-    /*
-    @PostMapping("/transfer")
-    public String transfer(
-            Model model,
-            @RequestParam("value") int value,
-            @RequestParam("login") String login
-    ) {
-        // TODO: Заменить на то, что описано в комментарии к методу
-        accountStub.transfer(model, value, login);
-
-        return "main";
-    }
-    */
 }

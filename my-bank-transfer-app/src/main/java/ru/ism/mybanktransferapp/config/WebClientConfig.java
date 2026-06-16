@@ -27,7 +27,6 @@ public class WebClientConfig {
                 .build();
         var authorizedClientManager = new DefaultReactiveOAuth2AuthorizedClientManager(
                 clientRegistrations,
-
                 authorizedClients);
         authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
         return authorizedClientManager;

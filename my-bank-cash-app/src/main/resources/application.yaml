@@ -14,7 +14,7 @@ spring:
           cash-app:
             provider: keycloak
             client-id: cash-app
-            client-secret: r49jp06vuDWQrAYs1fp9baivXlYOBYUz
+            client-secret: ${CASH.SECRET}
             authorization-grant-type: client_credentials
         provider:
           keycloak:

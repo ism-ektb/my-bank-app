@@ -52,6 +52,11 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountMapper::toAccountResponseDto);
     }
 
+    /**
+     * Добавляем деньги на счете пользователя и отправляем уведомление об этом
+     * @param cashMany
+     * @return
+     */
     @Override
     @Transactional
     public Mono<AccountResponseDto> addSum(CashMany cashMany) {
@@ -73,9 +78,13 @@ public class AccountServiceImpl implements AccountService {
                         .bodyToMono(Void.class)
                         .onErrorResume(e -> Mono.empty())
                         .then(Mono.just(dto)));
-
     }
 
+    /**
+     * Снимаем деньги со счета пользователя и отправляем уведомление
+     * @param cashMany
+     * @return
+     */
     @Override
     @Transactional
     public Mono<AccountResponseDto> reduceSum(CashMany cashMany) {
@@ -99,6 +108,11 @@ public class AccountServiceImpl implements AccountService {
                         .then(Mono.just(dto)));
     }
 
+    /**
+     * Перевод средств с одного счета на другой в соответствии с запросом
+     * @param transfer
+     * @return
+     */
     @Override
     @Transactional
     public Mono<Void> transfer(Transfer transfer) {
@@ -128,6 +142,11 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountMapper::toAccountResponseDto);
     }
 
+    /**
+     * Поиск всех пользователей за исключением инициатора поиска
+     * @param jwtAuthenticationToken
+     * @return
+     */
     @Override
     public Flux<AccountShortResponse> findAllWithoutUser(JwtAuthenticationToken jwtAuthenticationToken) {
         String login = jwtAuthenticationToken.getToken().getClaimAsString("preferred_username");

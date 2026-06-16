@@ -1,8 +1,6 @@
 package ru.ism.mybankaccountapp.controller;
 
 import lombok.RequiredArgsConstructor;
-
-
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -55,7 +53,6 @@ public class AccountController {
     @GetMapping("/all")
     public Flux<AccountShortResponse> getAllAccounts(JwtAuthenticationToken authentication) {
         return accountService.findAllWithoutUser(authentication);
-
     }
 
 
