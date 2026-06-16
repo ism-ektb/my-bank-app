@@ -8,18 +8,19 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/bank-realm
-
+          jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
+  cloud:
+    consul:
+      host: "${CONSUL.HOST:localhost}"
 management:
   endpoints:
     web:
       exposure:
         include: "*"
 
-
-
 logging:
   level:
     root: INFO
-
+bank:
+  keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
 

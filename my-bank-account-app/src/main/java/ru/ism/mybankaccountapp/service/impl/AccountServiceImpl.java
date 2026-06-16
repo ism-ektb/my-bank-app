@@ -2,6 +2,7 @@ package ru.ism.mybankaccountapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,8 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     @Autowired
     private WebClient webClient;
+    @Value("${bank.notification}")
+    private String bankNotificationUrl;
 
     @Override
     public Mono<AccountResponseDto> updateAccount(AccountRequestDto accountRequestDto, JwtAuthenticationToken authentication) {
@@ -64,7 +67,7 @@ public class AccountServiceImpl implements AccountService {
                 .flatMap(accountRepository::save)
                 .map(accountMapper::toAccountResponseDto)
                 .flatMap(dto -> webClient.post()
-                        .uri("http://localhost:8086/notification")
+                        .uri(bankNotificationUrl + "/notification")
                         .bodyValue(new Notification(String.format("Счет %s пополнен на сумму %d", cashMany.login(), cashMany.sum())))
                         .retrieve()
                         .bodyToMono(Void.class)
@@ -88,7 +91,7 @@ public class AccountServiceImpl implements AccountService {
                 .flatMap(accountRepository::save)
                 .map(accountMapper::toAccountResponseDto)
                 .flatMap(dto -> webClient.post()
-                        .uri("http://localhost:8086/notification")
+                        .uri(bankNotificationUrl+ "/notification")
                         .bodyValue(new Notification(String.format("Счет %s уменьшен на сумму %d", cashMany.login(), cashMany.sum())))
                         .retrieve()
                         .bodyToMono(Void.class)
@@ -111,7 +114,7 @@ public class AccountServiceImpl implements AccountService {
                             account.setBalance(sum);
                             return accountRepository.save(account);
                         })).then(webClient.post()
-                        .uri("http://localhost:8086/notification")
+                        .uri(bankNotificationUrl+ "/notification")
                         .bodyValue(new Notification(String.format("Успешный перевод со счета %s на счет %s на сумму %d",
                                 transfer.sender(), transfer.receiver(), transfer.sum())))
                         .retrieve()

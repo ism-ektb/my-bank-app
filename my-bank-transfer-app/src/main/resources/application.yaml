@@ -8,17 +8,24 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/bank-realm
+          jwk-set-uri: ${bank.keycloak-url}/protocol/openid-connect/certs
       client:
         registration:
           transfer-app:
             provider: keycloak
             client-id: transfer-app
-            client-secret: L3Vf34xlCdZIAaNou6jPb4KwQBCnL4R9
+            client-secret: dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0
             authorization-grant-type: client_credentials
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/bank-realm
+            user-name-attribute: preferred_username
+            authorization-uri: "http://localhost:8080/realms/bank-realm/protocol/openid-connect/auth"
+            token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
+            user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
+            jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
+  cloud:
+    consul:
+      host: "${CONSUL.HOST:localhost}"
 
 management:
   endpoints:
@@ -28,11 +35,12 @@ management:
 
 bank:
   accounts-service:
-    base-url: http://localhost:8083
+    base-url: "${ACCOUNT.URL:http://localhost:8083}"
+  keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
+  notification-url: "${NOTIFICATION.URL:http://localhost:8086}"
 
 logging:
   level:
     root: INFO
-    org.springframework:
-      security: trace
+
 

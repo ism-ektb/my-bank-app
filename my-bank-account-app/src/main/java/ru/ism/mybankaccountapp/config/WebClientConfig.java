@@ -1,5 +1,6 @@
 package ru.ism.mybankaccountapp.config;
 
+import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
@@ -29,11 +30,13 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
+    public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager,
+                               ReactorLoadBalancerExchangeFilterFunction lbFunction) {
         var oauth2Client = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
         oauth2Client.setDefaultClientRegistrationId("account-app");
         return WebClient.builder()
                 .filter(oauth2Client)
-                        .build();
+                .filter(lbFunction)
+                .build();
     }
 }

@@ -17,8 +17,10 @@ public class TransferServiceImpl implements TransferService {
 
     @Autowired
     private WebClient webClient;
-    @Value("http://localhost:8082")
+    @Value("${bank.accounts-service.base-url}")
     private String baseUrl;
+    @Value("${bank.notification-url}")
+    private String notificationUrl;
 
     @Override
     public Mono<Void> transfer(TransferRequest transferRequest, JwtAuthenticationToken jwtAuthenticationToken) {
@@ -45,7 +47,7 @@ public class TransferServiceImpl implements TransferService {
                 .retrieve()
                 .bodyToMono(Void.class)
                 .then(webClient.post()
-                        .uri("http://localhost:8086/notification")
+                        .uri(notificationUrl + "/notification")
                         .bodyValue(new Notification(String.format("Переведены средства со счета %s на счет %s в сумме %d", senderLogin, receiverLogin, amount)))
                         .retrieve()
                         .bodyToMono(Void.class)

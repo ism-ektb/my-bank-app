@@ -21,7 +21,7 @@ public class WebClientConfig {
     private ReactorLoadBalancerExchangeFilterFunction lbFunction;
 
     @Bean
-
+    @LoadBalanced
     WebClient gatewayWebClient(ReactiveClientRegistrationRepository clientRegistrationRepository,
                                ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
         ServerOAuth2AuthorizedClientExchangeFilterFunction oauth =

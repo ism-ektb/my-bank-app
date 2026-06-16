@@ -38,7 +38,9 @@ spring:
   application:
     name: my-bank-front-app
 
-eureka:
-  client:
-    service-url:
-      defaultZone: "${EUREKA.URL:http://localhost:8761/eureka/}"
+  cloud:
+    consul:
+      host: "${CONSUL.HOST:localhost}"
+
+    loadbalancer:
+      enabled: true

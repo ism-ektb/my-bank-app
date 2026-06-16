@@ -41,6 +41,7 @@ public class AccountController {
         return accountService.reduceSum(cashMany);
     }
 
+    @PreAuthorize("hasRole('SERVICE') && hasAuthority('account.write')")
     @PostMapping("/transfer")
     public Mono<Void> transfer(@RequestBody Transfer transfer) {
         return accountService.transfer(transfer);

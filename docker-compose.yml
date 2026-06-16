@@ -40,9 +40,9 @@ services:
        bank-keycloak:
          condition: service_healthy
     environment:
-      - GATEWAY.HOST=lb://my-bank-gateway
+      - GATEWAY.HOST=http://my-bank-gateway
       - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
-      - EUREKA.URL=http://eureka-server:8761/eureka/
+      - CONSUL.HOST=consul-server
 
   gateway-app:
     build: my-bank-gateway
@@ -54,8 +54,10 @@ services:
         condition: service_healthy
     environment:
       - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
-      - EUREKA.URL=http://eureka-server:8761/eureka/
+      - CONSUL.HOST=consul-server
       - ACCOUNT.HOST=lb://my-bank-account-app
+      - CASH.URL=lb://my-bank-cash-app
+      - TRANSFER.URL=lb://my-bank-transfer-app
 
   account-app:
     build: my-bank-account-app
@@ -68,12 +70,54 @@ services:
     environment:
       - DATASOURCE.URL=r2dbc:postgresql://bank-postgres:5432/market
       - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
-      - EUREKA.URL=http://eureka-server:8761/eureka/
+      - CONSUL.HOST=consul-server
+      - NOTIFICATION.URL=http://my-bank-notification-app
 
-  eureka-app:
-    build: my-bank-eureka
-    container_name: eureka-server
-    hostname: eureka-server
+  consul-server:
+    image: hashicorp/consul:2.0.0
+    container_name: consul-server
     ports:
-      - "8761:8761"
+      - "8500:8500"
+      - "8600:8600/udp"
+    command:
+      agent -dev -client=0.0.0.0
 
+  notification-app:
+    build: my-bank-notification-app
+    container_name: bank-notification-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+
+  cash-app:
+    build: my-bank-cash-app
+    container_name: bank-cash-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+      - NOTIFICATION.URL=http://my-bank-notification-app
+      - ACCOUNT.URL=http://my-bank-account-app
+
+  transfer-app:
+    build: my-bank-transfer-app
+    container_name: bank-transfer-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+      - NOTIFICATION.URL=http://my-bank-notification-app
+      - ACCOUNT.URL=http://my-bank-account-app

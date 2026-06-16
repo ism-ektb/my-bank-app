@@ -1,6 +1,7 @@
 package ru.ism.mybanktransferapp.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +19,7 @@ public class TransferController {
     private final TransferService transferService;
 
     @PostMapping
+    @PreAuthorize("hasRole('USER') && hasAuthority('account.write')")
     public Mono<Void> transfer(@RequestBody TransferRequest transferRequest, JwtAuthenticationToken jwtAuthenticationToken) {
         return transferService.transfer(transferRequest, jwtAuthenticationToken);
     }
