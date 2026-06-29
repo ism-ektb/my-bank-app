@@ -1,14 +1,15 @@
-package ru.ism.mybankfrontapp;
+package ru.ism.mybankgateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-
 @SpringBootApplication
 @EnableDiscoveryClient
-public class MyBankFrontAppApplication {
+public class MyBankGatewayApplication {
+
     public static void main(String[] args) {
-        SpringApplication.run(MyBankFrontAppApplication.class, args);
+        SpringApplication.run(MyBankGatewayApplication.class, args);
     }
+
 }

@@ -1,0 +1,48 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: my-bank-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${bank.keycloak-url}/protocol/openid-connect/certs
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: account-service
+              uri: ${ACCOUNT.HOST:http://localhost:8082}
+              predicates:
+                - Path=/account/**
+              filters:
+                - name: JwtTokenRelay
+            - id: cash-service
+              uri: ${CASH.URL:http://localhost:8083}
+              predicates:
+                - Path=/cash/**
+              filters:
+                - name: JwtTokenRelay
+            - id: transfer-service
+              uri: ${TRANSFER.URL:http://localhost:8085}
+              predicates:
+                 - Path=/transfer/**
+              filters:
+                - name: JwtTokenRelay
+    consul:
+      host: "${CONSUL.HOST:localhost}"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    root: INFO
+bank:
+  keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"

@@ -1,0 +1,124 @@
+services:
+  bank-postgres:
+    image: postgres:13.3
+    container_name: bank-postgres-container
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=market
+    ports:
+      - '6432:5432'
+    volumes:
+      - /usr/users:/users
+
+  bank-keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    volumes:
+      - ./realm:/opt/keycloak/data/import
+    command: start-dev --health-enabled=true --import-realm
+    environment:
+      # Для входа в UI будут использоваться эти параметры
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ 'CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/health/ready' ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  front-app:
+    build: my-bank-front-app
+    container_name: bank-front-container
+    ports:
+      - "8084:8084"
+    depends_on:
+       bank-keycloak:
+         condition: service_healthy
+       consul-server:
+         condition: service_started
+    environment:
+      - GATEWAY.HOST=http://my-bank-gateway
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+
+  gateway-app:
+    build: my-bank-gateway
+    container_name: bank-gateway-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+      - ACCOUNT.HOST=lb://my-bank-account-app
+      - CASH.URL=lb://my-bank-cash-app
+      - TRANSFER.URL=lb://my-bank-transfer-app
+
+  account-app:
+    build: my-bank-account-app
+    container_name: bank-account-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - DATASOURCE.URL=r2dbc:postgresql://bank-postgres:5432/market
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+      - NOTIFICATION.URL=http://my-bank-notification-app
+      - ACCOUNT.SECRET=A8U5u54LT3m9Besj3SV39L2E6iBh4lkU
+
+  consul-server:
+    image: hashicorp/consul:2.0.0
+    container_name: consul-server
+    ports:
+      - "8500:8500"
+    command:
+      agent -dev -client=0.0.0.0
+
+  notification-app:
+    build: my-bank-notification-app
+    container_name: bank-notification-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+
+  cash-app:
+    build: my-bank-cash-app
+    container_name: bank-cash-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+      - NOTIFICATION.URL=http://my-bank-notification-app
+      - ACCOUNT.URL=http://my-bank-account-app
+      - CASH.SECRET=r49jp06vuDWQrAYs1fp9baivXlYOBYUz
+
+  transfer-app:
+    build: my-bank-transfer-app
+    container_name: bank-transfer-container
+    depends_on:
+      bank-keycloak:
+        condition: service_healthy
+      consul-server:
+        condition: service_started
+    environment:
+      - KEYCLOAK.URL=http://bank-keycloak:8080/realms/bank-realm
+      - CONSUL.HOST=consul-server
+      - NOTIFICATION.URL=http://my-bank-notification-app
+      - ACCOUNT.URL=http://my-bank-account-app
+      - TRANSFER.SECRET=dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0
