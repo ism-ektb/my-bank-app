@@ -1,0 +1,29 @@
+
+# Configuration for the customer-db (PostgreSQL dependency)
+# Values here are prefixed according to the Bitnami PostgreSQL chart's structure
+# Check the Bitnami chart's values.yaml for all available options
+account-db:
+  enabled: true
+  # Override values from the official postgresql chart
+  auth:
+    database: market1
+    username: user1
+    # Use existingSecret or provide password (less secure for production)
+    # existingSecret: "{{ .Release.Name }}-customer-db-postgresql" # Name of the secret to use/create
+    postgresPassword: "v0IZuTHY0Y"
+    password: "v0IZuTHY0Y"
+    user1Password: "v0IZuTHY0Y"
+     # Example: Not recommended for production TTmjMBP1wK ESUYIvEKwGz8ukwVAfYix0Ye
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi # Small size for example
+account-app:
+  enabled: true
+  database:
+    url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
+    username: user1
+    password: v0IZuTHY0Y
+  envFrom:
+    - configMapRef:
+        name: my-configmap

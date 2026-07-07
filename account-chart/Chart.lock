@@ -1,0 +1,9 @@
+dependencies:
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 18.7.8
+- name: account-app
+  repository: file://./charts/account-app
+  version: 0.1.0
+digest: sha256:cec52a5c79f110805c81a6b3a87738e3a99033ead88b7eee0be4b2479ecc8f70
+generated: "2026-07-04T10:40:59.7212452+05:00"
