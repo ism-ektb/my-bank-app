@@ -1,10 +1,6 @@
 package ru.ism.mybankfrontapp.config;
 
-
 import io.netty.resolver.DefaultAddressResolverGroup;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -17,11 +13,7 @@ import reactor.netty.http.client.HttpClient;
 @Configuration
 public class WebClientConfig {
 
-    @Autowired
-    private ReactorLoadBalancerExchangeFilterFunction lbFunction;
-
     @Bean
-    @LoadBalanced
     WebClient gatewayWebClient(ReactiveClientRegistrationRepository clientRegistrationRepository,
                                ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
         ServerOAuth2AuthorizedClientExchangeFilterFunction oauth =
@@ -31,7 +23,6 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .filter(oauth)
-                .filter(lbFunction)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }

@@ -23,10 +23,10 @@ import java.util.Objects;
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final AccountMapper accountMapper;
-    @Autowired
-    private WebClient webClient;
-    @Value("${bank.notification}")
-    private String bankNotificationUrl;
+//    @Autowired
+//    private WebClient webClient;
+ //   @Value("${bank.notification}")
+ //   private String bankNotificationUrl;
 
     @Override
     public Mono<AccountResponseDto> updateAccount(AccountRequestDto accountRequestDto, JwtAuthenticationToken authentication) {
@@ -71,13 +71,16 @@ public class AccountServiceImpl implements AccountService {
                 })
                 .flatMap(accountRepository::save)
                 .map(accountMapper::toAccountResponseDto)
-                .flatMap(dto -> webClient.post()
+             /*   .flatMap(dto -> webClient.post()
                         .uri(bankNotificationUrl + "/notification")
                         .bodyValue(new Notification(String.format("Счет %s пополнен на сумму %d", cashMany.login(), cashMany.sum())))
                         .retrieve()
                         .bodyToMono(Void.class)
                         .onErrorResume(e -> Mono.empty())
-                        .then(Mono.just(dto)));
+                        .then(Mono.just(dto)))
+
+              */
+                ;
     }
 
     /**
@@ -98,14 +101,16 @@ public class AccountServiceImpl implements AccountService {
                 .filter(account -> account.getBalance() >= 0)
                 .switchIfEmpty(Mono.error(new RuntimeException("No cash")))
                 .flatMap(accountRepository::save)
-                .map(accountMapper::toAccountResponseDto)
-                .flatMap(dto -> webClient.post()
+                .map(accountMapper::toAccountResponseDto);
+          /*      .flatMap(dto -> webClient.post()
                         .uri(bankNotificationUrl+ "/notification")
                         .bodyValue(new Notification(String.format("Счет %s уменьшен на сумму %d", cashMany.login(), cashMany.sum())))
                         .retrieve()
                         .bodyToMono(Void.class)
                         .onErrorResume(e -> Mono.empty())
-                        .then(Mono.just(dto)));
+                        .then(Mono.just(dto)))
+                        ;
+           */
     }
 
     /**
@@ -127,13 +132,17 @@ public class AccountServiceImpl implements AccountService {
                             long sum = account.getBalance() + transfer.sum();
                             account.setBalance(sum);
                             return accountRepository.save(account);
-                        })).then(webClient.post()
+                        }))
+                .then();
+         /*       .then(webClient.post()
                         .uri(bankNotificationUrl+ "/notification")
                         .bodyValue(new Notification(String.format("Успешный перевод со счета %s на счет %s на сумму %d",
                                 transfer.sender(), transfer.receiver(), transfer.sum())))
                         .retrieve()
                         .bodyToMono(Void.class)
-                        .onErrorResume(e -> Mono.empty()));
+                        .onErrorResume(e -> Mono.empty()))
+
+          */
     }
 
     @Override

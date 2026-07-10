@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: front-configmap  # Имя ConfigMap будет комбинироваться с именем релиза
+data:
+  GATEWAY_HOST: {{ tpl .Values.service_url.gateway_host . | quote}}
+  KEYCLOAK_URL: {{ tpl .Values.service_url.keycloak_url . | quote}}
