@@ -35,3 +35,21 @@ dependencies:
     repository: "file://./charts/gateway-app"
     alias: gateway-app
     condition: gateway-app.enabled
+
+  - name: cash-app
+    version: 0.1.0
+    repository: "file://./charts/cash-app"
+    alias: cash-app
+    condition: cash-app.enabled
+
+  - name: notification-app
+    version: 0.1.0
+    repository: "file://./charts/notification-app"
+    alias: notification-app
+    condition: notification-app.enabled
+
+  - name: transfer-app
+    version: 0.1.0
+    repository: "file://./charts/transfer-app"
+    alias: transfer-app
+    condition: transfer-app.enabled

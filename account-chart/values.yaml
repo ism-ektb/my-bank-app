@@ -8,18 +8,21 @@ account-db:
   auth:
     database: market1
     username: user1
-    # Use existingSecret or provide password (less secure for production)
-    # existingSecret: "{{ .Release.Name }}-customer-db-postgresql" # Name of the secret to use/create
+
     postgresPassword: "v0IZuTHY0Y"
     password: "v0IZuTHY0Y"
     user1Password: "v0IZuTHY0Y"
-     # Example: Not recommended for production TTmjMBP1wK ESUYIvEKwGz8ukwVAfYix0Ye
+
   primary:
     persistence:
       enabled: true
       size: 1Gi # Small size for example
 account-app:
   enabled: true
+  image:
+    repository: my-bank-account
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
   database:
     url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
     username: user1
@@ -34,6 +37,7 @@ account-app:
 
 keycloak-app:
   enabled: true
+# Предварительно надо выполнить команду:
 # kubectl create secret generic realm-secret --from-file=realm-export.json
   command:
     - "/opt/keycloak/bin/kc.sh"
@@ -61,15 +65,12 @@ keycloak-app:
     type: LoadBalancer
     port: 8080
 
-
-  
-
 front-app:
   enabled: true
   image:
-    repository: my-bank-front-app
+    repository: my-bank-front
     pullPolicy: IfNotPresent
-    tag: "1.4"
+    tag: "1.0.1"
   service_url:
     gateway_host: http://{{ .Release.Name }}-gateway-app:8081
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
@@ -83,9 +84,9 @@ front-app:
 gateway-app:
   enabled: true
   image:
-    repository: my-bank-gateway-app
+    repository: my-bank-gateway
     pullPolicy: IfNotPresent
-    tag: "1.3"
+    tag: "1.0.1"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
@@ -94,3 +95,45 @@ gateway-app:
   envFrom:
     - configMapRef:
         name: gateway-configmap
+
+cash-app:
+  enabled: true
+  image:
+    repository: my-bank-cash
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+    account_url: http://{{ .Release.Name }}-account-app:8082
+    notification_url: http://{{ .Release.Name }}-notification-app:8086
+  cash_secret: r49jp06vuDWQrAYs1fp9baivXlYOBYUz
+  envFrom:
+    - configMapRef:
+        name: cash-configmap
+
+transfer-app:
+  enabled: true
+  image:
+    repository: my-bank-transfer
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+    account_url: http://{{ .Release.Name }}-account-app:8082
+    notification_url: http://{{ .Release.Name }}-notification-app:8086
+  transfer_secret: dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0
+  envFrom:
+    - configMapRef:
+        name: transfer-configmap
+
+notification-app:
+  enabled: true
+  image:
+    repository: my-bank-notification
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+  envFrom:
+    - configMapRef:
+        name: notification-configmap

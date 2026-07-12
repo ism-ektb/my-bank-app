@@ -1,7 +1,5 @@
 package ru.ism.mybankcashapp.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
@@ -14,9 +12,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
-
-    @Autowired
-    private ReactorLoadBalancerExchangeFilterFunction lbFunction;
 
     @Bean
     public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
@@ -37,7 +32,6 @@ public class WebClientConfig {
         oauth2Client.setDefaultClientRegistrationId("cash-app");
         return WebClient.builder()
                 .filter(oauth2Client)
-                .filter(lbFunction)
                 .build();
     }
 }
