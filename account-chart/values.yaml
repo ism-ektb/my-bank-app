@@ -19,10 +19,15 @@ account-db:
       size: 1Gi # Small size for example
 account-app:
   enabled: true
+  hooks:
+    myHook:
+      url: jdbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
+      username: user1
+      password: v0IZuTHY0Y
   image:
     repository: my-bank-account
     pullPolicy: IfNotPresent
-    tag: "1.0.1"
+    tag: "1.0.3"
   database:
     url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
     username: user1
@@ -137,3 +142,4 @@ notification-app:
   envFrom:
     - configMapRef:
         name: notification-configmap
+

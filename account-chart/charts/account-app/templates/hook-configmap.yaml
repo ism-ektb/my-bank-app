@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hook-configmap  # Имя ConfigMap будет комбинироваться с именем релиза
+data:
+  DATABASE_URL: {{ tpl .Values.hooks.myHook.url . | quote}}
+  DATABASE_USERNAME: {{ .Values.hooks.myHook.username | quote}}
+  DATABASE_PASSWORD: {{ .Values.hooks.myHook.password | quote}}

@@ -24,4 +24,4 @@ dependencies:
   repository: file://./charts/transfer-app
   version: 0.1.0
 digest: sha256:af8f81294ed0ce26adaf954e6596b0e245ade2b1732659e2c6dcd8c3641f30d4
-generated: "2026-07-10T17:51:34.0657619+05:00"
+generated: "2026-07-14T22:39:52.126747+05:00"

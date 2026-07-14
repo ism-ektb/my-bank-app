@@ -1,12 +1,12 @@
 group "default" {
-  targets = ["account", "cash", "transfer", "front", "gateway", "notification"]
+  targets = ["account", "cash", "transfer", "front", "gateway", "notification", "liquibase"]
 }
 
 target "account" {
 
   context = "./my-bank-account-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-account:1.0.1"]
+  tags = ["my-bank-account:1.0.3"]
 }
 
 target "cash" {
@@ -37,4 +37,10 @@ target "notification" {
   context = "./my-bank-notification-app"
   dockerfile = "Dockerfile"
   tags = ["my-bank-notification:1.0.1"]
+}
+
+target "liquibase" {
+  context = "./my-bank-liquibase"
+  dockerfile = "Dockerfile"
+  tags = ["my-bank-liquibase:1.0.2"]
 }
