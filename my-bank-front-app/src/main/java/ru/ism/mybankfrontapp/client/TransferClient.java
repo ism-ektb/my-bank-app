@@ -2,6 +2,8 @@ package ru.ism.mybankfrontapp.client;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -36,9 +38,9 @@ public class TransferClient {
 
     }
 
-    public Mono<AccountResponseDto> findAccountByLogin() {
+    public Mono<AccountResponseDto> findAccountByLoginOrCreateForNewLogin() {
         return gatewayWebClient
-                .get()
+                .post()
                 .uri(gatewayBaseUrl + "/account")
                 .retrieve()
                 .bodyToMono(AccountResponseDto.class);

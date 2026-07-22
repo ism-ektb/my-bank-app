@@ -62,7 +62,7 @@ public class MainController {
         return transferClient.findAllAccounts()
                 .collectList()
                 .map(list -> model.addAttribute("accounts", list)).then(
-                        transferClient.findAccountByLogin()
+                        transferClient.findAccountByLoginOrCreateForNewLogin()
                                 .map(dto -> {
                                     model.addAttribute("name", dto.name());
                                     model.addAttribute("sum", dto.balance());

@@ -1,3 +1,9 @@
+//plugins {
+  //  id 'org.springframework.cloud.contract' version("4.3.4")
+ //   id 'maven-publish'
+//}
+
+
 ext {
     mapstructVersion = "1.6.3"
     springCloudVersion = "2025.0.3"
@@ -11,7 +17,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.projectreactor:reactor-test'
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -20,6 +28,13 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
     implementation (project(":my-bank-dto"))
+    implementation platform('org.testcontainers:testcontainers-bom:2.0.2')
+    testImplementation('org.springframework.boot:spring-boot-testcontainers')
+    testImplementation('org.testcontainers:testcontainers-postgresql')
+    testImplementation('org.testcontainers:testcontainers-junit-jupiter')
+    testImplementation('org.testcontainers:r2dbc:1.21.4')
+ //   testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:4.3.4")
+
 }
 
 dependencyManagement {
@@ -27,4 +42,20 @@ dependencyManagement {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion"
     }
 }
+/*
+contracts {
+    baseClassForTests.set(
+            "ru.ism.mybankaccountapp.service.contract.BaseAccountsContractTest"
+    )
+}
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from(components["java"])
+            artifact(tasks.named("verifierStubsJar"))
+        }
+    }
+}
+
+ */
