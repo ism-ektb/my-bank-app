@@ -167,6 +167,7 @@ class AccountControllerTest {
                 .bodyValue(new Transfer("uu", "uu1", -1L))
                 .exchange().expectStatus().is4xxClientError();
     }
+
     @Test
     void transfer_sender_equal_receiver() {
         when(accountService.transfer(any())).thenReturn(Mono.empty());

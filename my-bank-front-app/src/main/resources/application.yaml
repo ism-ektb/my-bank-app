@@ -3,7 +3,7 @@ server:
 
 bank:
   gateway:
-    base-url: "${GATEWAY.HOST:lb://my-bank-gateway}"
+    base-url: "${GATEWAY.HOST:http://localhost:8081}"
   keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
 
 logging:

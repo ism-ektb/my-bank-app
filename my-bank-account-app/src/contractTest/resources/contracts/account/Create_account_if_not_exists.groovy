@@ -3,12 +3,12 @@ package contracts.account
 import org.springframework.cloud.contract.spec.Contract
 
 Contract.make {
-    description 'Get all accounts for transfer menu'
-    name 'get_all_accounts'
+    description 'Create account if do not exits'
+    name 'create_account_if_not_exist'
 
     request {
-        method GET()
-        url '/account/all'
+        method POST()
+        url '/account'
         headers {
             header 'Authorization', value(
                     // Для консьюмера (WireMock): любой Bearer-токен
@@ -24,6 +24,6 @@ Contract.make {
         headers {
             contentType(applicationJson())
         }
-        body("name":"testUser1","login":"testUser1")
+        body("name":"testUser", "birthdate":[1999,1,1], "login":"testUser", "balance":10)
     }
 }

@@ -1,10 +1,12 @@
 package ru.ism.mybanktransferapp.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import ru.ism.mybankdto.exception.ClientException;
 import ru.ism.mybankdto.exception.ValidationException;
 import ru.ism.mybankdto.module.*;
 import ru.ism.mybanktransferapp.service.TransferService;
@@ -17,8 +19,8 @@ public class TransferServiceImpl implements TransferService {
     private final String notificationUrl;
 
     public TransferServiceImpl(WebClient webClient,
-                           @Value("${bank.accounts-service.base-url}") String accountUrl,
-                           @Value("${bank.notification-url}") String notificationUrl) {
+                               @Value("${bank.accounts-service.base-url}") String accountUrl,
+                               @Value("${bank.notification-url}") String notificationUrl) {
         this.webClient = webClient;
         this.accountUrl = accountUrl;
         this.notificationUrl = notificationUrl;
@@ -27,7 +29,6 @@ public class TransferServiceImpl implements TransferService {
     @Override
     public Mono<Void> transfer(TransferRequest transferRequest, JwtAuthenticationToken jwtAuthenticationToken) {
         String senderLogin = jwtAuthenticationToken.getToken().getClaimAsString("preferred_username");
-
         return checkMoney(transferRequest.sum(), senderLogin)
                 .then(transferMoney(transferRequest.name(), senderLogin, transferRequest.sum()));
     }
@@ -36,6 +37,12 @@ public class TransferServiceImpl implements TransferService {
         return webClient.get()
                 .uri(accountUrl + "/account/" + senderLogin)
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("TransferService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ClientException("AccountService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToMono(AccountResponseDto.class)
                 .filter(dto -> dto.balance() >= amount)
                 .switchIfEmpty(Mono.error(new ValidationException("Sender have not enough money")))
@@ -47,6 +54,12 @@ public class TransferServiceImpl implements TransferService {
                 .uri(accountUrl + "/account/transfer")
                 .bodyValue(new Transfer(senderLogin, receiverLogin, amount))
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("TransferService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ClientException("AccountService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToMono(Void.class)
                 .then(webClient.post()
                         .uri(notificationUrl + "/notification")

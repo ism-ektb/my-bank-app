@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import reactor.core.publisher.Mono;
 
@@ -23,7 +22,7 @@ public class JwtTestConfig {
         return token -> {
             Instant now = Instant.now();
 
-            return Mono.just( Jwt.withTokenValue(token)
+            return Mono.just(Jwt.withTokenValue(token)
                     .header("alg", "none")
                     .subject("contract-test")
                     .claim("realm_access", Map.of(

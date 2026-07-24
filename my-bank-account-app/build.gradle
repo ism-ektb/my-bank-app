@@ -1,7 +1,7 @@
-//plugins {
-  //  id 'org.springframework.cloud.contract' version("4.3.4")
- //   id 'maven-publish'
-//}
+plugins {
+  id 'org.springframework.cloud.contract' version("4.3.4")
+   id 'maven-publish'
+}
 
 
 ext {
@@ -33,7 +33,8 @@ dependencies {
     testImplementation('org.testcontainers:testcontainers-postgresql')
     testImplementation('org.testcontainers:testcontainers-junit-jupiter')
     testImplementation('org.testcontainers:r2dbc:1.21.4')
- //   testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:4.3.4")
+    testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:4.3.4")
+    testImplementation 'io.rest-assured:spring-web-test-client:6.0.1'
 
 }
 
@@ -42,8 +43,9 @@ dependencyManagement {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion"
     }
 }
-/*
+
 contracts {
+    testMode = 'WEBTESTCLIENT'
     baseClassForTests.set(
             "ru.ism.mybankaccountapp.service.contract.BaseAccountsContractTest"
     )
@@ -58,4 +60,3 @@ publishing {
     }
 }
 
- */

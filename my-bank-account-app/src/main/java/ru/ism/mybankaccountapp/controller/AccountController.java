@@ -26,7 +26,7 @@ public class AccountController {
     }
 
     @PostMapping
-    public Mono<AccountResponseDto> getAccountOrCreateForNewUser(JwtAuthenticationToken authentication) {
+    public Mono<AccountResponseDto> createAccountIfNotExist(JwtAuthenticationToken authentication) {
         return accountService.findAccount(authentication);
     }
 

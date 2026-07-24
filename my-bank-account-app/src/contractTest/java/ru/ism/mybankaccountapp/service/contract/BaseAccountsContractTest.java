@@ -1,39 +1,35 @@
 package ru.ism.mybankaccountapp.service.contract;
 
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import io.restassured.module.webtestclient.RestAssuredWebTestClient;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.ism.mybankaccountapp.controller.AccountController;
 import ru.ism.mybankaccountapp.service.AccountService;
 import ru.ism.mybankdto.module.AccountResponseDto;
+import ru.ism.mybankdto.module.AccountShortResponse;
 
-
-import java.sql.Date;
 import java.time.LocalDate;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebFluxTest(controllers = AccountController.class)
 @ActiveProfiles("contract-test")
 public abstract class BaseAccountsContractTest {
-
-    @Autowired
-    protected MockMvc mockMvc;
 
     @MockitoBean
     protected AccountService accountService;
 
     @BeforeEach
     void setup() {
-        RestAssuredMockMvc.mockMvc(mockMvc);
-
-        when(accountService.findByName("testUser"))
-                .thenReturn(Mono.just(new AccountResponseDto("testUser", LocalDate.of(1999, 01, 01), "testUser", 10L)));
+        RestAssuredWebTestClient.standaloneSetup(new AccountController(accountService));
+        when(accountService.findAllWithoutUser(any()))
+                .thenReturn(Flux.just(new AccountShortResponse("testUser1", "testUser1")));
+        when(accountService.findAccount(any()))
+                .thenReturn(Mono.just(new AccountResponseDto("testUser",
+                        LocalDate.of(1999, 1, 1), "testUser", 10L)));
     }
 }

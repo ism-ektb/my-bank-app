@@ -9,8 +9,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation(project(":my-bank-dto"))
+    testImplementation("org.springframework.cloud:spring-cloud-starter-contract-stub-runner:4.3.4")
 }
 
 dependencyManagement {

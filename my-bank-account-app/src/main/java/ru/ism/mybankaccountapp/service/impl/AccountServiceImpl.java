@@ -1,12 +1,9 @@
 package ru.ism.mybankaccountapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.mybankaccountapp.AccountRepository;
@@ -58,7 +55,6 @@ public class AccountServiceImpl implements AccountService {
      * @return
      */
     @Override
-    @Transactional
     public Mono<AccountResponseDto> addSum(CashMoney cashMany) {
         System.out.println("cashMany: " + cashMany);
         return accountRepository.findByLogin(cashMany.login())
@@ -110,8 +106,8 @@ public class AccountServiceImpl implements AccountService {
                 .switchIfEmpty(Mono.error(new NoFoundException("Отправитель не найден")))
                 .then(accountRepository.findByLogin(transfer.receiver())
                         .switchIfEmpty(Mono.error(new NoFoundException("Получатель не найден"))))
-                .then(accountRepository.reduceBalance(transfer.receiver(), transfer.sum())
-                        .then(accountRepository.addBalance(transfer.sender(), transfer.sum())))
+                .then(accountRepository.reduceBalance(transfer.sender(), transfer.sum())
+                        .then(accountRepository.addBalance(transfer.receiver(), transfer.sum())))
                 .then(notificationService
                         .sendNotification(new Notification(String.format("Успешный перевод со счета %s на счет %s на сумму %d",
                                 transfer.sender(), transfer.receiver(), transfer.sum())))
