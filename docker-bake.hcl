@@ -6,7 +6,7 @@ target "account" {
 
   context = "./my-bank-account-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-account:1.0.3"]
+  tags = ["my-bank-account:1.0.6"]
 }
 
 target "cash" {

@@ -6,12 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.ism.mybankaccountapp.AccountRepository;
+import ru.ism.mybankaccountapp.repository.AccountRepository;
 import ru.ism.mybankaccountapp.mapper.AccountMapper;
 import ru.ism.mybankaccountapp.model.Account;
 import ru.ism.mybankaccountapp.service.AccountService;
 import ru.ism.mybankaccountapp.service.NotificationService;
 import ru.ism.mybankdto.exception.NoFoundException;
+import ru.ism.mybankdto.exception.ValidationException;
 import ru.ism.mybankdto.module.*;
 
 import java.util.Objects;
@@ -55,16 +56,14 @@ public class AccountServiceImpl implements AccountService {
      * @return
      */
     @Override
+    @Transactional
     public Mono<AccountResponseDto> addSum(CashMoney cashMany) {
-        System.out.println("cashMany: " + cashMany);
         return accountRepository.findByLogin(cashMany.login())
-                .map(account -> {
-                    long sum = account.getBalance();
-                    sum += cashMany.sum();
-                    account.setBalance(sum);
-                    return account;
-                })
-                .flatMap(accountRepository::save)
+                .switchIfEmpty(Mono.error(new NoFoundException("Пользователь не найден")))
+                .then(accountRepository.addBalance(cashMany.login(), cashMany.sum())
+                        .filter(a -> a == 1)
+                        .switchIfEmpty(Mono.error(new ValidationException("Ошибка пополнения средств"))))
+                .then(accountRepository.findByLogin(cashMany.login()))
                 .map(accountMapper::toAccountResponseDto)
                 .flatMap(dto -> notificationService
                         .sendNotification(new Notification(String.format("Счет %s пополнен на сумму %d", cashMany.login(), cashMany.sum())))
@@ -79,10 +78,13 @@ public class AccountServiceImpl implements AccountService {
      * @return
      */
     @Override
+    @Transactional
     public Mono<AccountResponseDto> reduceSum(CashMoney cashMany) {
         return accountRepository.findByLogin(cashMany.login())
                 .switchIfEmpty(Mono.error(new NoFoundException("Пользователь не найден")))
-                .then(accountRepository.reduceBalance(cashMany.login(), cashMany.sum()))
+                .then(accountRepository.reduceBalance(cashMany.login(), cashMany.sum())
+                        .filter(a -> a == 1)
+                        .switchIfEmpty(Mono.error(new ValidationException("Ошибка списания средств"))))
                 .then(accountRepository.findByLogin(cashMany.login()))
                 .map(accountMapper::toAccountResponseDto)
                 .flatMap(dto -> notificationService
@@ -107,7 +109,11 @@ public class AccountServiceImpl implements AccountService {
                 .then(accountRepository.findByLogin(transfer.receiver())
                         .switchIfEmpty(Mono.error(new NoFoundException("Получатель не найден"))))
                 .then(accountRepository.reduceBalance(transfer.sender(), transfer.sum())
-                        .then(accountRepository.addBalance(transfer.receiver(), transfer.sum())))
+                        .filter(a -> a == 1)
+                        .switchIfEmpty(Mono.error(new ValidationException("Ошибка списания средств")))
+                        .then(accountRepository.addBalance(transfer.receiver(), transfer.sum())
+                                .filter(a -> a == 1)
+                                .switchIfEmpty(Mono.error(new ValidationException("Ошибка пополнения счета")))))
                 .then(notificationService
                         .sendNotification(new Notification(String.format("Успешный перевод со счета %s на счет %s на сумму %d",
                                 transfer.sender(), transfer.receiver(), transfer.sum())))

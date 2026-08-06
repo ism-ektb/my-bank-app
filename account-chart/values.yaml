@@ -27,7 +27,7 @@ account-app:
   image:
     repository: my-bank-account
     pullPolicy: IfNotPresent
-    tag: "1.0.3"
+    tag: "1.0.6"
   database:
     url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
     username: user1

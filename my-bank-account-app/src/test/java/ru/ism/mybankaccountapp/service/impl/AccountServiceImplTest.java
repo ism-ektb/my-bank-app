@@ -2,14 +2,14 @@ package ru.ism.mybankaccountapp.service.impl;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.r2dbc.R2dbcConnectionDetails;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -22,10 +22,13 @@ import ru.ism.mybankdto.module.AccountResponseDto;
 import ru.ism.mybankdto.module.CashMoney;
 import ru.ism.mybankdto.module.Transfer;
 
+import java.util.concurrent.CountDownLatch;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = "spring.sql.init.mode=always")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {"spring.liquibase.default-schema=account_service", "spring.liquibase.enabled=true"
+})
 @Testcontainers
 class AccountServiceImplTest {
 
@@ -42,9 +45,19 @@ class AccountServiceImplTest {
 
 
     @Container
-    @ServiceConnection(type = {R2dbcConnectionDetails.class})
     static PostgreSQLContainer<?> postgreSQLContainer =
-            new PostgreSQLContainer<>("postgres:15");
+            new PostgreSQLContainer<>("postgres:15")
+                    .withInitScript("schema1.sql");
+
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        registry.add("spring.liquibase.url", postgreSQLContainer::getJdbcUrl);
+        registry.add("spring.liquibase.user", postgreSQLContainer::getUsername);
+        registry.add("spring.liquibase.password", postgreSQLContainer::getPassword);
+        registry.add("spring.r2dbc.url", () -> postgreSQLContainer.getJdbcUrl().replace("jdbc:", "r2dbc:"));
+        registry.add("spring.r2dbc.username", postgreSQLContainer::getUsername);
+        registry.add("spring.r2dbc.password", postgreSQLContainer::getPassword);
+    }
 
     @Test
     void find_account_if_no_account() {
@@ -79,7 +92,7 @@ class AccountServiceImplTest {
     /**
      * Создаем счет. Пополняем его. Снимаем средства одновременно несколькими потоками
      */
-    void cash_integral_test() {
+    void cash_integral_test() throws InterruptedException {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
         Jwt jwt = Jwt.withTokenValue("testToken")
                 .header("alg", "HS256")
@@ -88,22 +101,24 @@ class AccountServiceImplTest {
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         accountService.findAccount(token).block();
         accountService.addSum(new CashMoney("testUser2", 100L)).block();
-
+        int count = 10;
+        CountDownLatch latch = new CountDownLatch(count);
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                accountService.reduceSum(new CashMoney("testUser2", 1L)).block();
+                try {
+                    accountService.reduceSum(new CashMoney("testUser2", 1L)).block();
+                } finally {
+                    latch.countDown();
+                }
             }
         };
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < count; i++) {
             Thread thread = new Thread(runnable);
             thread.start();
+
         }
-        try {
-            Thread.sleep(1000); // Пауза на 1 секунду. Ждем завершения всех потоков
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        latch.await();
         AccountResponseDto dto = accountService.findAccount(token).block();
         assertNotNull(dto);
         assertEquals(90L, dto.balance());
@@ -117,7 +132,7 @@ class AccountServiceImplTest {
      * В ходе теста могут выбрасываться исключения - это его нормальная работа.
      */
     @Test
-    void transfer_integral_test() {
+    void transfer_integral_test() throws InterruptedException {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
         Jwt jwt = Jwt.withTokenValue("testToken")
                 .header("alg", "HS256")
@@ -132,28 +147,31 @@ class AccountServiceImplTest {
                 .build();
         JwtAuthenticationToken token1 = new JwtAuthenticationToken(jwt1);
         accountService.findAccount(token1).block();
+        int count = 10;
+        CountDownLatch latch = new CountDownLatch(count);
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                accountService.transfer(new Transfer("testUser", "testUser1", 8L)).block();
-                accountService.transfer(new Transfer("testUser1", "testUser", 8L)).block();
+                try {
+                    accountService.transfer(new Transfer("testUser", "testUser1", 8L)).block();
+                    accountService.transfer(new Transfer("testUser1", "testUser", 8L)).block();
+                } finally {
+                    latch.countDown();
+                }
             }
         };
-        for (int i = 0; i < 10; i++) {
+        for (
+                int i = 0;
+                i < 10; i++) {
             Thread thread = new Thread(runnable);
             thread.start();
         }
-        try {
-            Thread.sleep(1000); // Пауза на 1 секунду. Ждем завершения работы всех потоков
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        latch.await();
         AccountResponseDto dto = accountService.findAccount(token).block();
         assertNotNull(dto);
         AccountResponseDto dto1 = accountService.findAccount(token1).block();
         assertNotNull(dto1);
         assertEquals(8L, dto.balance() + dto1.balance());
-
     }
 
 }
