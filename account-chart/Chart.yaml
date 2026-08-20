@@ -53,3 +53,9 @@ dependencies:
     repository: "file://./charts/transfer-app"
     alias: transfer-app
     condition: transfer-app.enabled
+
+  - name: kafka
+    version: 18.0.1
+    repository: https://helm-charts.itboon.top/kafka/
+    alias: kafka-app
+    condition: kafka-app.enabled

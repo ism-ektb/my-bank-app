@@ -6,19 +6,19 @@ target "account" {
 
   context = "./my-bank-account-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-account:1.0.6"]
+  tags = ["my-bank-account:1.1.5"]
 }
 
 target "cash" {
   context = "./my-bank-cash-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-cash:1.0.1"]
+  tags = ["my-bank-cash:1.1.0"]
 }
 
 target "transfer" {
   context = "./my-bank-transfer-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-transfer:1.0.1"]
+  tags = ["my-bank-transfer:1.1.0"]
 }
 
 target "front" {
@@ -36,7 +36,7 @@ target "gateway" {
 target "notification" {
   context = "./my-bank-notification-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-notification:1.0.1"]
+  tags = ["my-bank-notification:1.1.6"]
 }
 
 target "liquibase" {

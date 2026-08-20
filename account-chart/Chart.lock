@@ -23,5 +23,8 @@ dependencies:
 - name: transfer-app
   repository: file://./charts/transfer-app
   version: 0.1.0
-digest: sha256:af8f81294ed0ce26adaf954e6596b0e245ade2b1732659e2c6dcd8c3641f30d4
-generated: "2026-08-06T16:02:41.6411519+05:00"
+- name: kafka
+  repository: https://helm-charts.itboon.top/kafka/
+  version: 18.0.1
+digest: sha256:d71ff33c37f8cfa949603f7b68a069bf7a5544d410a45b973895872afe8110d6
+generated: "2026-08-20T21:00:32.9410236+05:00"

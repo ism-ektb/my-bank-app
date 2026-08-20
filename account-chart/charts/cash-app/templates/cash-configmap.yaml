@@ -4,6 +4,6 @@ metadata:
   name: cash-configmap  # Имя ConfigMap будет комбинироваться с именем релиза
 data:
   KEYCLOAK.URL: {{ tpl .Values.service_url.keycloak_url . | quote}}
-  NOTIFICATION.URL: {{ tpl .Values.service_url.notification_url . | quote}}
+  KAFKA.URL: {{ tpl .Values.service_url.kafka_url . | quote}}
   CASH.SECRET: {{ .Values.cash_secret | quote}}
   ACCOUNT.URL: {{ tpl .Values.service_url.account_url . | quote}}

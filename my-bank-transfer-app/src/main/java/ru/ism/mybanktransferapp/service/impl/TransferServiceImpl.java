@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import ru.ism.mybankdto.exception.ClientException;
 import ru.ism.mybankdto.exception.ValidationException;
 import ru.ism.mybankdto.module.*;
+import ru.ism.mybanktransferapp.service.NotificationTransferService;
 import ru.ism.mybanktransferapp.service.TransferService;
 
 @Service
@@ -16,14 +17,14 @@ public class TransferServiceImpl implements TransferService {
 
     private final WebClient webClient;
     private final String accountUrl;
-    private final String notificationUrl;
+    private final NotificationTransferService notificationService;
 
     public TransferServiceImpl(WebClient webClient,
                                @Value("${bank.accounts-service.base-url}") String accountUrl,
-                               @Value("${bank.notification-url}") String notificationUrl) {
+                               NotificationTransferService notificationService) {
         this.webClient = webClient;
         this.accountUrl = accountUrl;
-        this.notificationUrl = notificationUrl;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -61,11 +62,8 @@ public class TransferServiceImpl implements TransferService {
                     return Mono.error(new ClientException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(Void.class)
-                .then(webClient.post()
-                        .uri(notificationUrl + "/notification")
-                        .bodyValue(new Notification(String.format("Переведены средства со счета %s на счет %s в сумме %d", senderLogin, receiverLogin, amount)))
-                        .retrieve()
-                        .bodyToMono(Void.class)
+                .then(notificationService.sendNotification(new Notification(
+                                String.format("Переведены средства со счета %s на счет %s в сумме %d", senderLogin, receiverLogin, amount)))
                         .onErrorResume(throwable -> Mono.empty()));
     }
 }

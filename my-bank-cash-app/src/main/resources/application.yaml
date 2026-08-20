@@ -23,6 +23,12 @@ spring:
             token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
             user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
             jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
+  kafka:
+    bootstrap-servers: ${KAFKA.URL:kafka-broker-0.kafka-headless.default.svc.cluster.local:9092}
+    producer:
+      acks: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 management:
   endpoints:

@@ -4,11 +4,11 @@ server:
 spring:
   application:
     name: my-bank-notification-app
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
+  kafka:
+    bootstrap-servers: ${KAFKA.URL:kafka-broker-0.kafka-headless.default.svc.cluster.local:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 management:
   endpoints:
@@ -19,6 +19,5 @@ management:
 logging:
   level:
     root: INFO
-bank:
-  keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
+
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import ru.ism.mybankcashapp.service.CashService;
+import ru.ism.mybankcashapp.service.NotificationCashService;
 import ru.ism.mybankdto.exception.ClientException;
 import ru.ism.mybankdto.exception.ServerException;
 import ru.ism.mybankdto.module.Action;
@@ -24,15 +25,15 @@ public class CashServiceImpl implements CashService {
     private final WebClient webClient;
     private final Map<Action, Function<CashMoney, Mono<Void>>> actionHandlers;
     private final String accountUrl;
-    private final String notificationUrl;
+    private final NotificationCashService notificationService;
 
     public CashServiceImpl(WebClient webClient,
                            @Value("${bank.accounts-service.base-url}") String accountUrl,
-                           @Value("${bank.notification-url}") String notificationUrl) {
+                           NotificationCashService notificationService) {
         this.webClient = webClient;
         this.accountUrl = accountUrl;
-        this.notificationUrl = notificationUrl;
         this.actionHandlers = Map.of(Action.PUT, this::addCash, Action.GET, this::reduceCash);
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -54,11 +55,7 @@ public class CashServiceImpl implements CashService {
                     return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(Void.class)
-                .then(webClient.post()
-                        .uri(notificationUrl + "/notification")
-                        .bodyValue(new Notification(String.format("Внесение денег на счет %s в сумме %d", cashMoney.login(), cashMoney.sum())))
-                        .retrieve()
-                        .bodyToMono(Void.class)
+                .then(notificationService.sendNotification(new Notification(String.format("Внесение денег на счет %s в сумме %d", cashMoney.login(), cashMoney.sum())))
                         .onErrorResume(e -> Mono.empty())
                 );
     }
@@ -75,11 +72,7 @@ public class CashServiceImpl implements CashService {
                     return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(Void.class)
-                .then(webClient.post()
-                        .uri(notificationUrl + "/notification")
-                        .bodyValue(new Notification(String.format("Снятие денег на счет %s в сумме %d", cashMoney.login(), cashMoney.sum())))
-                        .retrieve()
-                        .bodyToMono(Void.class)
+                .then(notificationService.sendNotification(new Notification(String.format("Снятие денег на счет %s в сумме %d", cashMoney.login(), cashMoney.sum())))
                         .onErrorResume(e -> Mono.empty())
                 );
     }

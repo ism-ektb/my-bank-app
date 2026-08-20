@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: notification-configmap  # Имя ConfigMap будет комбинироваться с именем релиза
 data:
-  KEYCLOAK.URL: {{ tpl .Values.service_url.keycloak_url . | quote}}
+  KAFKA.URL: {{ tpl .Values.service_url.kafka_url . | quote}}
