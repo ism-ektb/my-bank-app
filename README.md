@@ -8,17 +8,15 @@
 2. Зайти в папку 'my-bank-app'
 3. Сменить ветку с 'main' на 'sprint_10'
 4. Открыть проект в среде разработки
-5. Собрать предварительно без запуска тестов командой "gradle build -x test". Каждый микросервис будет собран в своем модуле. Так же будет собран stubs-jar сервиса "accounts"
-6. Опубликовать stubs-jar в mavenLocal командой "gradle publishToMavenLocal" Теперь контрактные тесты front-service смогут запуститься.
-7. Соберём проект вместе с запуском тестов командой "gradle bootJar"
-8. Находясь в директории 'my-bank-app', выполнить команду "docker buildx bake". Будут собраны имиджи всех модулей.
-9. Находясь в директории 'my-bank-app', выполнить команду "kubectl create secret generic realm-secret --from-file=realm-export.json" . Для загрузки в Kubernetes файла с настройками Keycloak
-10. Добавить в Helm библиотеки Codecentric и Bitnami командами:
+5. Соберём проект вместе с запуском тестов командой "gradle bootJar"
+6. Находясь в директории 'my-bank-app', выполнить команду "docker buildx bake". Будут собраны имиджи всех модулей.
+7. Находясь в директории 'my-bank-app', выполнить команду "kubectl create secret generic realm-secret --from-file=realm-export.json" . Для загрузки в Kubernetes файла с настройками Keycloak
+8. Добавить в Helm библиотеки Codecentric и Bitnami командами:
     - 'helm repo add codecentric https://codecentric.github.io/helm-charts'
     - 'helm repo add bitnami https://charts.bitnami.com/bitnami'
-    - 'helm repo update'
-11. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
-12. Запустить проект командой 'helm install account-chart account-chart/' 
+    - 'helm repo update' 
+9. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
+10. Запустить проект командой 'helm install account-chart account-chart/' 
 ## Терминал немного зависнет (у меня на пару минут). Он будет ждать пока контейнер с liquibase выполнит свою работу.
 
 Запуск занимает продолжительное время (особенно Keycloak). У меня на компьютере он занимает несколько минут. 
