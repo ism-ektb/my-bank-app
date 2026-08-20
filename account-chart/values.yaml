@@ -1,0 +1,145 @@
+
+# Configuration for the customer-db (PostgreSQL dependency)
+# Values here are prefixed according to the Bitnami PostgreSQL chart's structure
+# Check the Bitnami chart's values.yaml for all available options
+account-db:
+  enabled: true
+  # Override values from the official postgresql chart
+  auth:
+    database: market1
+    username: user1
+
+    postgresPassword: "v0IZuTHY0Y"
+    password: "v0IZuTHY0Y"
+    user1Password: "v0IZuTHY0Y"
+
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi # Small size for example
+account-app:
+  enabled: true
+  hooks:
+    myHook:
+      url: jdbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
+      username: user1
+      password: v0IZuTHY0Y
+  image:
+    repository: my-bank-account
+    pullPolicy: IfNotPresent
+    tag: "1.0.6"
+  database:
+    url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
+    username: user1
+    password: v0IZuTHY0Y
+  account_secret: A8U5u54LT3m9Besj3SV39L2E6iBh4lkU
+  service_url:
+    notification_url: http://{{ .Release.Name }}-notification-app:8086
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+  envFrom:
+    - configMapRef:
+        name: my-configmap
+
+keycloak-app:
+  enabled: true
+# Предварительно надо выполнить команду:
+# kubectl create secret generic realm-secret --from-file=realm-export.json
+  command:
+    - "/opt/keycloak/bin/kc.sh"
+    - "start"
+    - "--http-port=8080"
+    - "--hostname-strict=false"
+    - "--import-realm"
+  extraVolumes: |
+    - name: realm-secret
+      secret:
+        secretName: realm-secret
+  extraVolumeMounts: |
+    - name: realm-secret
+      mountPath: "/opt/keycloak/data/import/"
+      readOnly: true
+  extraEnv: |
+    - name: KEYCLOAK_ADMIN
+      value: admin
+    - name: KEYCLOAK_ADMIN_PASSWORD
+      value: admin    
+    - name: JAVA_OPTS_APPEND
+      value: >-
+        -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
+  service:
+    type: LoadBalancer
+    port: 8080
+
+front-app:
+  enabled: true
+  image:
+    repository: my-bank-front
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    gateway_host: http://{{ .Release.Name }}-gateway-app:8081
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+  envFrom:
+    - configMapRef:
+        name: front-configmap
+  service:
+    type: LoadBalancer
+    port: 8084
+
+gateway-app:
+  enabled: true
+  image:
+    repository: my-bank-gateway
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+    account_url: http://{{ .Release.Name }}-account-app:8082
+    cash_url: http://{{ .Release.Name }}-cash-app:8083
+    transfer_url: http://{{ .Release.Name }}-transfer-app:8085
+  envFrom:
+    - configMapRef:
+        name: gateway-configmap
+
+cash-app:
+  enabled: true
+  image:
+    repository: my-bank-cash
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+    account_url: http://{{ .Release.Name }}-account-app:8082
+    notification_url: http://{{ .Release.Name }}-notification-app:8086
+  cash_secret: r49jp06vuDWQrAYs1fp9baivXlYOBYUz
+  envFrom:
+    - configMapRef:
+        name: cash-configmap
+
+transfer-app:
+  enabled: true
+  image:
+    repository: my-bank-transfer
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+    account_url: http://{{ .Release.Name }}-account-app:8082
+    notification_url: http://{{ .Release.Name }}-notification-app:8086
+  transfer_secret: dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0
+  envFrom:
+    - configMapRef:
+        name: transfer-configmap
+
+notification-app:
+  enabled: true
+  image:
+    repository: my-bank-notification
+    pullPolicy: IfNotPresent
+    tag: "1.0.1"
+  service_url:
+    keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
+  envFrom:
+    - configMapRef:
+        name: notification-configmap
+

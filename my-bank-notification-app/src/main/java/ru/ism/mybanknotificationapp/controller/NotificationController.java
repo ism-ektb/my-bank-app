@@ -19,6 +19,5 @@ public class NotificationController {
         String serviceName = authentication.getToken().getClaimAsString("preferred_username");
         log.info("Сервис {} сообщение {}", serviceName, notification.notification());
         return Mono.empty();
-
     }
 }

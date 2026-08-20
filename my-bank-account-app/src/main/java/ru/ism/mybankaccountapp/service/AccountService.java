@@ -16,14 +16,14 @@ public interface AccountService {
      * @param cashMany
      * @return
      */
-    Mono<AccountResponseDto> addSum(CashMany cashMany);
+    Mono<AccountResponseDto> addSum(CashMoney cashMany);
 
     /**
      * Снимаем деньги со счета пользователя и отправляем уведомление
      * @param cashMany
      * @return
      */
-    Mono<AccountResponseDto> reduceSum(CashMany cashMany);
+    Mono<AccountResponseDto> reduceSum(CashMoney cashMany);
 
     /**
      * Осуществляем перевод с одного счета на другой
@@ -41,5 +41,5 @@ public interface AccountService {
      */
     Flux<AccountShortResponse> findAllWithoutUser(JwtAuthenticationToken authentication);
 
-
+    Mono<AccountResponseDto> createAccount(JwtAuthenticationToken authentication);
 }

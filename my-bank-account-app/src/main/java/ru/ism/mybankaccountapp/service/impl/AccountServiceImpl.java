@@ -1,18 +1,19 @@
 package ru.ism.mybankaccountapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.ism.mybankaccountapp.AccountRepository;
+import ru.ism.mybankaccountapp.repository.AccountRepository;
 import ru.ism.mybankaccountapp.mapper.AccountMapper;
 import ru.ism.mybankaccountapp.model.Account;
 import ru.ism.mybankaccountapp.service.AccountService;
+import ru.ism.mybankaccountapp.service.NotificationService;
+import ru.ism.mybankdto.exception.NoFoundException;
+import ru.ism.mybankdto.exception.ValidationException;
 import ru.ism.mybankdto.module.*;
 
 import java.util.Objects;
@@ -23,16 +24,13 @@ import java.util.Objects;
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final AccountMapper accountMapper;
-    @Autowired
-    private WebClient webClient;
-    @Value("${bank.notification}")
-    private String bankNotificationUrl;
+    private final NotificationService notificationService;
 
     @Override
     public Mono<AccountResponseDto> updateAccount(AccountRequestDto accountRequestDto, JwtAuthenticationToken authentication) {
         String login = authentication.getToken().getClaimAsString("preferred_username");
         return accountRepository.findByLogin(login)
-                .defaultIfEmpty(new Account())
+                .switchIfEmpty(Mono.error(new NoFoundException(String.format("Login %s not found", login))))
                 .map(account -> {
                     accountMapper.updateAccount(account, accountRequestDto);
                     return account;
@@ -44,72 +42,59 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Mono<AccountResponseDto> findAccount(JwtAuthenticationToken authentication) {
         String login = authentication.getToken().getClaimAsString("preferred_username");
-        Account newAccount = new Account();
-        newAccount.setLogin(login);
-
         return accountRepository.findByLogin(login)
-                .switchIfEmpty(accountRepository.save(newAccount))
                 .map(accountMapper::toAccountResponseDto);
     }
 
     /**
      * Добавляем деньги на счете пользователя и отправляем уведомление об этом
+     *
      * @param cashMany
      * @return
      */
     @Override
     @Transactional
-    public Mono<AccountResponseDto> addSum(CashMany cashMany) {
-        System.out.println("cashMany: " + cashMany);
+    public Mono<AccountResponseDto> addSum(CashMoney cashMany) {
         return accountRepository.findByLogin(cashMany.login())
-                .map(account -> {
-                    long sum = account.getBalance();
-                    sum += cashMany.sum();
-                    account.setBalance(sum);
-                    System.out.println(account);
-                    return account;
-                })
-                .flatMap(accountRepository::save)
+                .switchIfEmpty(Mono.error(new NoFoundException("Пользователь не найден")))
+                .then(accountRepository.addBalance(cashMany.login(), cashMany.sum())
+                        .filter(a -> a == 1)
+                        .switchIfEmpty(Mono.error(new ValidationException("Ошибка пополнения средств"))))
+                .then(accountRepository.findByLogin(cashMany.login()))
                 .map(accountMapper::toAccountResponseDto)
-                .flatMap(dto -> webClient.post()
-                        .uri(bankNotificationUrl + "/notification")
-                        .bodyValue(new Notification(String.format("Счет %s пополнен на сумму %d", cashMany.login(), cashMany.sum())))
-                        .retrieve()
-                        .bodyToMono(Void.class)
+                .flatMap(dto -> notificationService
+                        .sendNotification(new Notification(String.format("Счет %s пополнен на сумму %d", cashMany.login(), cashMany.sum())))
                         .onErrorResume(e -> Mono.empty())
                         .then(Mono.just(dto)));
     }
 
     /**
      * Снимаем деньги со счета пользователя и отправляем уведомление
+     *
      * @param cashMany
      * @return
      */
     @Override
     @Transactional
-    public Mono<AccountResponseDto> reduceSum(CashMany cashMany) {
+    public Mono<AccountResponseDto> reduceSum(CashMoney cashMany) {
         return accountRepository.findByLogin(cashMany.login())
-                .map(account -> {
-                    long sum = account.getBalance();
-                    sum -= cashMany.sum();
-                    account.setBalance(sum);
-                    return account;
-                })
-                .filter(account -> account.getBalance() >= 0)
-                .switchIfEmpty(Mono.error(new RuntimeException("No cash")))
-                .flatMap(accountRepository::save)
+                .switchIfEmpty(Mono.error(new NoFoundException("Пользователь не найден")))
+                .then(accountRepository.reduceBalance(cashMany.login(), cashMany.sum())
+                        .filter(a -> a == 1)
+                        .switchIfEmpty(Mono.error(new ValidationException("Ошибка списания средств"))))
+                .then(accountRepository.findByLogin(cashMany.login()))
                 .map(accountMapper::toAccountResponseDto)
-                .flatMap(dto -> webClient.post()
-                        .uri(bankNotificationUrl+ "/notification")
-                        .bodyValue(new Notification(String.format("Счет %s уменьшен на сумму %d", cashMany.login(), cashMany.sum())))
-                        .retrieve()
-                        .bodyToMono(Void.class)
+                .flatMap(dto -> notificationService
+                        .sendNotification(new Notification(String.format("Счет %s уменьшен на сумму %d", cashMany.login(), cashMany.sum())))
                         .onErrorResume(e -> Mono.empty())
                         .then(Mono.just(dto)));
+
+
     }
 
     /**
      * Перевод средств с одного счета на другой в соответствии с запросом
+     *
      * @param transfer
      * @return
      */
@@ -117,22 +102,18 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public Mono<Void> transfer(Transfer transfer) {
         return accountRepository.findByLogin(transfer.sender())
-                .flatMap(account -> {
-                    long sum = account.getBalance() - transfer.sum();
-                    account.setBalance(sum);
-                    return accountRepository.save(account);
-                })
+                .switchIfEmpty(Mono.error(new NoFoundException("Отправитель не найден")))
                 .then(accountRepository.findByLogin(transfer.receiver())
-                        .flatMap(account -> {
-                            long sum = account.getBalance() + transfer.sum();
-                            account.setBalance(sum);
-                            return accountRepository.save(account);
-                        })).then(webClient.post()
-                        .uri(bankNotificationUrl+ "/notification")
-                        .bodyValue(new Notification(String.format("Успешный перевод со счета %s на счет %s на сумму %d",
+                        .switchIfEmpty(Mono.error(new NoFoundException("Получатель не найден"))))
+                .then(accountRepository.reduceBalance(transfer.sender(), transfer.sum())
+                        .filter(a -> a == 1)
+                        .switchIfEmpty(Mono.error(new ValidationException("Ошибка списания средств")))
+                        .then(accountRepository.addBalance(transfer.receiver(), transfer.sum())
+                                .filter(a -> a == 1)
+                                .switchIfEmpty(Mono.error(new ValidationException("Ошибка пополнения счета")))))
+                .then(notificationService
+                        .sendNotification(new Notification(String.format("Успешный перевод со счета %s на счет %s на сумму %d",
                                 transfer.sender(), transfer.receiver(), transfer.sum())))
-                        .retrieve()
-                        .bodyToMono(Void.class)
                         .onErrorResume(e -> Mono.empty()));
     }
 
@@ -144,6 +125,7 @@ public class AccountServiceImpl implements AccountService {
 
     /**
      * Поиск всех пользователей за исключением инициатора поиска
+     *
      * @param jwtAuthenticationToken
      * @return
      */
@@ -153,5 +135,15 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findAll()
                 .filter(account -> !Objects.equals(account.getLogin(), login))
                 .map(accountMapper::toAccountShortResponse);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('account.write')")
+    public Mono<AccountResponseDto> createAccount(JwtAuthenticationToken authentication) {
+        String login = authentication.getToken().getClaimAsString("preferred_username");
+        Account newAccount = new Account();
+        newAccount.setLogin(login);
+        return accountRepository.save(newAccount)
+                .map(accountMapper::toAccountResponseDto);
     }
 }

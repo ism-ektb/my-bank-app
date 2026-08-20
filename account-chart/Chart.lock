@@ -1,0 +1,27 @@
+dependencies:
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 18.7.8
+- name: account-app
+  repository: file://./charts/account-app
+  version: 0.1.0
+- name: front-app
+  repository: file://./charts/front-app
+  version: 0.1.0
+- name: keycloakx
+  repository: https://codecentric.github.io/helm-charts
+  version: 7.2.2
+- name: gateway-app
+  repository: file://./charts/gateway-app
+  version: 0.1.0
+- name: cash-app
+  repository: file://./charts/cash-app
+  version: 0.1.0
+- name: notification-app
+  repository: file://./charts/notification-app
+  version: 0.1.0
+- name: transfer-app
+  repository: file://./charts/transfer-app
+  version: 0.1.0
+digest: sha256:af8f81294ed0ce26adaf954e6596b0e245ade2b1732659e2c6dcd8c3641f30d4
+generated: "2026-08-06T16:02:41.6411519+05:00"

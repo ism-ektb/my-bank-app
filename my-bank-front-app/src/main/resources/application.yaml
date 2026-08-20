@@ -3,7 +3,7 @@ server:
 
 bank:
   gateway:
-    base-url: "${GATEWAY.HOST:lb://my-bank-gateway}"
+    base-url: "${GATEWAY.HOST:http://localhost:8081}"
   keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
 
 logging:
@@ -25,12 +25,9 @@ spring:
         provider:
           keycloak:
             user-name-attribute: preferred_username
-            authorization-uri: "http://localhost:8080/realms/bank-realm/protocol/openid-connect/auth"
+            authorization-uri: "http://localhost:80/auth/realms/bank-realm/protocol/openid-connect/auth"
             token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
             user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
             jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
   application:
     name: my-bank-front-app
-  cloud:
-    consul:
-      host: "${CONSUL.HOST:localhost}"

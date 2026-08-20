@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-configmap  # Имя ConfigMap будет комбинироваться с именем релиза
+data:
+  KEYCLOAK.URL: {{ tpl .Values.service_url.keycloak_url . | quote}}
+  ACCOUNT.HOST: {{ tpl .Values.service_url.account_url . | quote}}
+  CASH.URL: {{ tpl .Values.service_url.cash_url . | quote}}
+  TRANSFER.URL: {{ tpl .Values.service_url.transfer_url . | quote}}

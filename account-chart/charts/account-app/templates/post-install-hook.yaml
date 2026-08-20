@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-post-install-hook
+  annotations:
+    helm.sh/hook: "post-install"
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: my-container
+          image: my-bank-liquibase:1.0.2
+          envFrom:
+            - configMapRef:
+                name: hook-configmap

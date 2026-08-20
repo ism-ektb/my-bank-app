@@ -2,10 +2,13 @@ package ru.ism.mybankfrontapp.client;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.ism.mybankdto.exception.ClientException;
+import ru.ism.mybankdto.exception.ServerException;
 import ru.ism.mybankdto.module.*;
 
 import java.time.LocalDate;
@@ -26,21 +29,32 @@ public class TransferClient {
 
     public Mono<AccountResponseDto> updateAccount(String name, LocalDate birthDate) {
         AccountRequestDto request = new AccountRequestDto(name, birthDate);
-        System.out.println(request);
         return gatewayWebClient
                 .put()
                 .uri(gatewayBaseUrl + "/account")
                 .bodyValue(request)
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("FrontService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToMono(AccountResponseDto.class);
 
     }
 
-    public Mono<AccountResponseDto> findAccountByLogin() {
+    public Mono<AccountResponseDto> findAccountByLoginOrCreateForNewLogin() {
         return gatewayWebClient
-                .get()
+                .post()
                 .uri(gatewayBaseUrl + "/account")
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("FrontService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToMono(AccountResponseDto.class);
     }
 
@@ -50,6 +64,12 @@ public class TransferClient {
                 .uri(gatewayBaseUrl + "/cash")
                 .bodyValue(new ActionDto(sum, action))
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("FrontService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ServerException("CashService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToMono(Void.class);
     }
 
@@ -59,6 +79,12 @@ public class TransferClient {
                 .uri(gatewayBaseUrl + "/transfer")
                 .bodyValue(new TransferRequest(name, amount))
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("FrontService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ServerException("CashService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToMono(Void.class);
     }
 
@@ -67,6 +93,12 @@ public class TransferClient {
                 .get()
                 .uri(gatewayBaseUrl + "/account/all")
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    return Mono.error(new ClientException("FrontService client Error. Status code: " + responseEntity.statusCode()));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
+                })
                 .bodyToFlux(AccountShortResponse.class);
     }
 }

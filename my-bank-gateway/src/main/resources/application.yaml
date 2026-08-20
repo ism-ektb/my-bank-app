@@ -33,8 +33,6 @@ spring:
                  - Path=/transfer/**
               filters:
                 - name: JwtTokenRelay
-    consul:
-      host: "${CONSUL.HOST:localhost}"
 management:
   endpoints:
     web:
@@ -44,5 +42,8 @@ management:
 logging:
   level:
     root: INFO
+    org:
+      springframework:
+        security: trace
 bank:
   keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"

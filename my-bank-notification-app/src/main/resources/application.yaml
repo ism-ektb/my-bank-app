@@ -9,9 +9,7 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
-  cloud:
-    consul:
-      host: "${CONSUL.HOST:localhost}"
+
 management:
   endpoints:
     web:

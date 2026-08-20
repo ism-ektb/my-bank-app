@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: ilya
+      changes:
+        - createSequence:
+            schemaName: account_service
+            sequenceName: account_id_seq
+            startValue: 1
+            incrementBy: 1
+
+        - createTable:
+            tableName: accounts
+            schemaName: account_service
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  defaultValueSequenceNext: account_id_seq
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: login
+                  type: varchar
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: username
+                  type: varchar
+              - column:
+                  name: birthdate
+                  type: date
+              - column:
+                  name: balance
+                  type: bigint
+  - changeSet:
+      changes:
+        - sql:
+            sql: ALTER TABLE accounts ADD CONSTRAINT Balance_Positive CHECK (balance >= 0);
+      id: 02
+      author: Ilya
+
