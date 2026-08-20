@@ -3,11 +3,13 @@ package ru.ism.mybankaccountapp.service.impl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -64,15 +66,41 @@ class AccountServiceImplTest {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
         Jwt jwt = Jwt.withTokenValue("testToken")
                 .header("alg", "HS256")
-                .claim("preferred_username", "testUser")
+                .claim("preferred_username", "testUser0")
                 .build();
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         AccountResponseDto dto = accountService.findAccount(token).block();
-        assertNotNull(dto);
-        assertEquals("testUser", dto.login());
+        assertNull(dto);
     }
 
     @Test
+    @WithMockUser(authorities = { "account.write" })
+    void create_account() {
+        when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
+        Jwt jwt = Jwt.withTokenValue("testToken")
+                .header("alg", "HS256")
+                .claim("preferred_username", "testUser6")
+                .build();
+        JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
+        AccountResponseDto dto = accountService.createAccount(token).block();
+        assertNotNull(dto);
+        assertEquals("testUser6", dto.login());
+    }
+
+    @Test
+    @WithMockUser(authorities = { "account.read" })
+    void create_account_no_authorities() {
+        when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
+        Jwt jwt = Jwt.withTokenValue("testToken")
+                .header("alg", "HS256")
+                .claim("preferred_username", "testUser")
+                .build();
+        JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
+        assertThrows(AuthorizationDeniedException.class, () -> accountService.createAccount(token).block());
+    }
+
+    @Test
+    @WithMockUser(authorities = { "account.write" })
     void update_account() {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
         Jwt jwt = Jwt.withTokenValue("testToken")
@@ -80,7 +108,7 @@ class AccountServiceImplTest {
                 .claim("preferred_username", "testUser")
                 .build();
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
-        accountService.findAccount(token).block();
+        accountService.createAccount(token).block();
         accountService.updateAccount(new AccountRequestDto("testName", null), token).block();
         AccountResponseDto dto = accountService.findAccount(token).block();
         assertNotNull(dto);
@@ -92,6 +120,7 @@ class AccountServiceImplTest {
     /**
      * Создаем счет. Пополняем его. Снимаем средства одновременно несколькими потоками
      */
+    @WithMockUser(authorities = { "account.write" })
     void cash_integral_test() throws InterruptedException {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
         Jwt jwt = Jwt.withTokenValue("testToken")
@@ -99,7 +128,7 @@ class AccountServiceImplTest {
                 .claim("preferred_username", "testUser2")
                 .build();
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
-        accountService.findAccount(token).block();
+        accountService.createAccount(token).block();
         accountService.addSum(new CashMoney("testUser2", 100L)).block();
         int count = 10;
         CountDownLatch latch = new CountDownLatch(count);
@@ -132,29 +161,30 @@ class AccountServiceImplTest {
      * В ходе теста могут выбрасываться исключения - это его нормальная работа.
      */
     @Test
+    @WithMockUser(authorities = { "account.write" })
     void transfer_integral_test() throws InterruptedException {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
-        Jwt jwt = Jwt.withTokenValue("testToken")
+        Jwt jwt = Jwt.withTokenValue("testToken5")
                 .header("alg", "HS256")
-                .claim("preferred_username", "testUser")
+                .claim("preferred_username", "testUser5")
                 .build();
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
-        accountService.findAccount(token).block();
-        accountService.addSum(new CashMoney("testUser", 8L)).block();
+        accountService.createAccount(token).block();
+        accountService.addSum(new CashMoney("testUser5", 8L)).block();
         Jwt jwt1 = Jwt.withTokenValue("testToken1")
                 .header("alg", "HS256")
                 .claim("preferred_username", "testUser1")
                 .build();
         JwtAuthenticationToken token1 = new JwtAuthenticationToken(jwt1);
-        accountService.findAccount(token1).block();
+        accountService.createAccount(token1).block();
         int count = 10;
         CountDownLatch latch = new CountDownLatch(count);
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 try {
-                    accountService.transfer(new Transfer("testUser", "testUser1", 8L)).block();
-                    accountService.transfer(new Transfer("testUser1", "testUser", 8L)).block();
+                    accountService.transfer(new Transfer("testUser5", "testUser1", 8L)).block();
+                    accountService.transfer(new Transfer("testUser1", "testUser5", 8L)).block();
                 } finally {
                     latch.countDown();
                 }
@@ -173,5 +203,4 @@ class AccountServiceImplTest {
         assertNotNull(dto1);
         assertEquals(8L, dto.balance() + dto1.balance());
     }
-
 }

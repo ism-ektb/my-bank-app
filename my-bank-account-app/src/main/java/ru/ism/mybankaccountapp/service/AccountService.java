@@ -41,5 +41,5 @@ public interface AccountService {
      */
     Flux<AccountShortResponse> findAllWithoutUser(JwtAuthenticationToken authentication);
 
-
+    Mono<AccountResponseDto> createAccount(JwtAuthenticationToken authentication);
 }

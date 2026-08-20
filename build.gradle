@@ -17,5 +17,3 @@ allprojects {
         targetCompatibility = JavaVersion.VERSION_21
     }
 }
-
-

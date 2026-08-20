@@ -60,4 +60,16 @@ class CashControllerTest {
                 .bodyValue(new ActionDto(1L, Action.GET))
                 .exchange().expectStatus().isEqualTo(403);
     }
+
+    @Test
+    void cash_bad_dto_action_null() {
+        when(cashService.cash(any(), any())).thenReturn(Mono.empty());
+        webClient.mutateWith(mockJwt()
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                                new SimpleGrantedAuthority("account.write")))
+                .post()
+                .uri("/cash")
+                .bodyValue(new ActionDto(1L, null))
+                .exchange().expectStatus().isEqualTo(400);
+    }
 }

@@ -30,4 +30,5 @@ dependencyManagement {
 
 tasks.named('test') {
     useJUnitPlatform()
+    dependsOn(":my-bank-account-app:publishToMavenLocal")
 }

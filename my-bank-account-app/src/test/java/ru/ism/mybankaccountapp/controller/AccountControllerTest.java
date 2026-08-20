@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -33,10 +34,13 @@ class AccountControllerTest {
 
 
     @Test
-    @WithMockUser()
     void findByName() {
         when(accountService.findByName(anyString())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
-        webClient.get().uri("/account/qewop").exchange().expectStatus().isOk();
+        webClient
+                .mutateWith(mockJwt()
+                        .authorities(new SimpleGrantedAuthority("ROLE_SERVICE")
+                        ))
+                .get().uri("/account/qewop").exchange().expectStatus().isOk();
         verify(accountService, times(1)).findByName(anyString());
     }
 
@@ -185,10 +189,46 @@ class AccountControllerTest {
     void getAllAccounts() {
         when(accountService.findAllWithoutUser(any())).thenReturn(Flux.empty());
         webClient.mutateWith(mockJwt()
-                        .authorities(new SimpleGrantedAuthority("ROLE_SERVICE"),
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"),
                                 new SimpleGrantedAuthority("account.write")))
                 .get()
                 .uri("/account/all")
                 .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void createAccountIfNotExist_accountExist() {
+        when(accountService.findAccount(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
+        when(accountService.createAccount(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
+        webClient.mutateWith(mockJwt()
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                                new SimpleGrantedAuthority("account.write")))
+                .post()
+                .uri("/account")
+                .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void createAccountIfNotExist_createAccount() {
+        when(accountService.findAccount(any())).thenReturn(Mono.empty());
+        when(accountService.createAccount(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
+        webClient.mutateWith(mockJwt()
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                                new SimpleGrantedAuthority("account.write")))
+                .post()
+                .uri("/account")
+                .exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void createAccountIfNotExist_no_authority() {
+        when(accountService.findAccount(any())).thenReturn(Mono.empty());
+        when(accountService.createAccount(any())).thenThrow(new AuthorizationDeniedException(""));
+        webClient.mutateWith(mockJwt()
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"),
+                                new SimpleGrantedAuthority("account.write")))
+                .post()
+                .uri("/account")
+                .exchange().expectStatus().isForbidden();
     }
 }

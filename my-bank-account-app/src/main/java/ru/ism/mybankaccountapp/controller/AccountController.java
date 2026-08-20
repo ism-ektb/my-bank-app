@@ -26,8 +26,10 @@ public class AccountController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public Mono<AccountResponseDto> createAccountIfNotExist(JwtAuthenticationToken authentication) {
-        return accountService.findAccount(authentication);
+        return accountService.findAccount(authentication)
+                .switchIfEmpty(accountService.createAccount(authentication));
     }
 
     @PreAuthorize("hasRole('SERVICE') && hasAuthority('account.write')")
@@ -48,11 +50,13 @@ public class AccountController {
         return accountService.transfer(transfer);
     }
 
+    @PreAuthorize("hasRole('SERVICE')")
     @GetMapping("/{login}")
     public Mono<AccountResponseDto> getAccountByName(@PathVariable String login) {
         return accountService.findByName(login);
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/all")
     public Flux<AccountShortResponse> getAllAccounts(JwtAuthenticationToken authentication) {
         return accountService.findAllWithoutUser(authentication);

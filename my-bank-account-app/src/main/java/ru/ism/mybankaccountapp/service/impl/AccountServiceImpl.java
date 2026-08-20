@@ -1,6 +1,7 @@
 package ru.ism.mybankaccountapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class AccountServiceImpl implements AccountService {
     public Mono<AccountResponseDto> updateAccount(AccountRequestDto accountRequestDto, JwtAuthenticationToken authentication) {
         String login = authentication.getToken().getClaimAsString("preferred_username");
         return accountRepository.findByLogin(login)
-                .defaultIfEmpty(new Account())
+                .switchIfEmpty(Mono.error(new NoFoundException(String.format("Login %s not found", login))))
                 .map(account -> {
                     accountMapper.updateAccount(account, accountRequestDto);
                     return account;
@@ -41,11 +42,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Mono<AccountResponseDto> findAccount(JwtAuthenticationToken authentication) {
         String login = authentication.getToken().getClaimAsString("preferred_username");
-        Account newAccount = new Account();
-        newAccount.setLogin(login);
-
         return accountRepository.findByLogin(login)
-                .switchIfEmpty(accountRepository.save(newAccount))
                 .map(accountMapper::toAccountResponseDto);
     }
 
@@ -138,5 +135,15 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findAll()
                 .filter(account -> !Objects.equals(account.getLogin(), login))
                 .map(accountMapper::toAccountShortResponse);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('account.write')")
+    public Mono<AccountResponseDto> createAccount(JwtAuthenticationToken authentication) {
+        String login = authentication.getToken().getClaimAsString("preferred_username");
+        Account newAccount = new Account();
+        newAccount.setLogin(login);
+        return accountRepository.save(newAccount)
+                .map(accountMapper::toAccountResponseDto);
     }
 }

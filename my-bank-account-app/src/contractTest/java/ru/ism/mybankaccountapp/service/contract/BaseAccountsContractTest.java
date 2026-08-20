@@ -31,5 +31,7 @@ public abstract class BaseAccountsContractTest {
         when(accountService.findAccount(any()))
                 .thenReturn(Mono.just(new AccountResponseDto("testUser",
                         LocalDate.of(1999, 1, 1), "testUser", 10L)));
+        when(accountService.createAccount(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
+
     }
 }
