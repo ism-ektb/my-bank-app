@@ -9,3 +9,4 @@ data:
   KEYCLOAK.URL: {{ tpl .Values.service_url.keycloak_url . | quote}}
   ACCOUNT.SECRET: {{ .Values.account_secret | quote}}
   KAFKA.URL: {{ tpl .Values.service_url.kafka_url . | quote}}
+  ZIPKIN.URL: {{ tpl .Values.service_url.zipkin_url . | quote}}

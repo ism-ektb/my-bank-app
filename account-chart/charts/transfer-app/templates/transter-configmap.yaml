@@ -7,3 +7,4 @@ data:
   KAFKA.URL: {{ tpl .Values.service_url.kafka_url . | quote}}
   TRANSFER.SECRET: {{ .Values.transfer_secret | quote}}
   ACCOUNT.URL: {{ tpl .Values.service_url.account_url . | quote}}
+  ZIPKIN.URL: {{ tpl .Values.service_url.zipkin_url . | quote}}

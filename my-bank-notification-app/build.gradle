@@ -15,6 +15,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
     implementation(project(":my-bank-dto"))
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'  // Мост между Micrometer и Brave
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave' // Библиотека для отправки спанов в zipkin
+
 }
 
 tasks.named('test') {

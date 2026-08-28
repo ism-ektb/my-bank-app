@@ -36,7 +36,7 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
+    public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager, WebClient.Builder builder) {
         var oauth2Client = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
         oauth2Client.setDefaultClientRegistrationId("transfer-app");
         HttpClient httpClient = HttpClient.create()
@@ -45,7 +45,7 @@ public class WebClientConfig {
                 .doOnConnected(conn ->
                         conn.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS))
                                 .addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS)));
-        return WebClient.builder()
+        return builder
                 .filter(oauth2Client)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();

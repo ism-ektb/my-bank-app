@@ -26,5 +26,8 @@ dependencies:
 - name: kafka
   repository: https://helm-charts.itboon.top/kafka/
   version: 18.0.1
-digest: sha256:d71ff33c37f8cfa949603f7b68a069bf7a5544d410a45b973895872afe8110d6
-generated: "2026-08-20T21:00:32.9410236+05:00"
+- name: zipkin
+  repository: https://zipkin.io/zipkin-helm
+  version: 0.5.0
+digest: sha256:3a4fe45de3f67521db56188be906fb77fd9f25eefb5e0b246e48514852efd313
+generated: "2026-08-27T18:50:50.8658804+05:00"

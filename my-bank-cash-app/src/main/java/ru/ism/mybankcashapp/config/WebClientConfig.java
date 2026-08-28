@@ -1,5 +1,6 @@
 package ru.ism.mybankcashapp.config;
 
+import brave.Tracer;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -35,7 +36,7 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
+    public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager, WebClient.Builder builder) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .responseTimeout(Duration.ofMillis(5000))
@@ -45,7 +46,7 @@ public class WebClientConfig {
 
         var oauth2Client = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
         oauth2Client.setDefaultClientRegistrationId("cash-app");
-        return WebClient.builder()
+        return builder
                 .filter(oauth2Client)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();

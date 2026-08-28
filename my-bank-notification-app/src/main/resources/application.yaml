@@ -9,12 +9,20 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      observation-enabled: true
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN.URL:http://localhost:9411/api/v2/spans}
+  tracing:
+    sampling:
+      probability: 1
 
 logging:
   level:

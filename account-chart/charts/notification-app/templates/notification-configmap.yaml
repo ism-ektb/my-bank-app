@@ -4,3 +4,4 @@ metadata:
   name: notification-configmap  # Имя ConfigMap будет комбинироваться с именем релиза
 data:
   KAFKA.URL: {{ tpl .Values.service_url.kafka_url . | quote}}
+  ZIPKIN.URL: {{ tpl .Values.service_url.zipkin_url . | quote}}

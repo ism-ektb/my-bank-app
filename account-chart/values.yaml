@@ -27,13 +27,14 @@ account-app:
   image:
     repository: my-bank-account
     pullPolicy: IfNotPresent
-    tag: "1.1.5"
+    tag: "1.2.4"
   database:
     url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
     username: user1
     password: v0IZuTHY0Y
   account_secret: A8U5u54LT3m9Besj3SV39L2E6iBh4lkU
   service_url:
+    zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     kafka_url: http://{{ .Release.Name }}-kafka-app-broker:9092
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
   envFrom:
@@ -75,8 +76,9 @@ front-app:
   image:
     repository: my-bank-front
     pullPolicy: IfNotPresent
-    tag: "1.0.1"
+    tag: "1.2.3"
   service_url:
+    zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     gateway_host: http://{{ .Release.Name }}-gateway-app:8081
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
   envFrom:
@@ -91,8 +93,9 @@ gateway-app:
   image:
     repository: my-bank-gateway
     pullPolicy: IfNotPresent
-    tag: "1.0.1"
+    tag: "1.2.3"
   service_url:
+    zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
     cash_url: http://{{ .Release.Name }}-cash-app:8083
@@ -106,11 +109,12 @@ cash-app:
   image:
     repository: my-bank-cash
     pullPolicy: IfNotPresent
-    tag: "1.1.0"
+    tag: "1.2.6"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
     kafka_url: http://{{ .Release.Name }}-kafka-app-broker:9092
+    zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
   cash_secret: r49jp06vuDWQrAYs1fp9baivXlYOBYUz
   envFrom:
     - configMapRef:
@@ -121,11 +125,12 @@ transfer-app:
   image:
     repository: my-bank-transfer
     pullPolicy: IfNotPresent
-    tag: "1.1.0"
+    tag: "1.2.3"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
     kafka_url: http://{{ .Release.Name }}-kafka-app-broker:9092
+    zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
   transfer_secret: dudm1HJ7u6BtZpOiMJ2XImsrF1mYmTI0
   envFrom:
     - configMapRef:
@@ -136,12 +141,16 @@ notification-app:
   image:
     repository: my-bank-notification
     pullPolicy: IfNotPresent
-    tag: "1.1.6"
+    tag: "1.2.1"
   service_url:
+    zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     kafka_url: http://{{ .Release.Name }}-kafka-app-broker:9092
   envFrom:
     - configMapRef:
         name: notification-configmap
 
 kafka-app:
+  enable: true
+
+zipkin-app:
   enable: true
