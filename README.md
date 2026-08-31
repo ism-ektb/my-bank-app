@@ -6,7 +6,7 @@
 
 1. Необходимо клонировать проект на локальный компьютер.
 2. Зайти в папку 'my-bank-app'
-3. Сменить ветку с 'main' на 'sprint_10'
+3. Сменить ветку с 'main' на 'sprint_11'
 4. Открыть проект в среде разработки
 5. Соберём проект вместе с запуском тестов командой "gradle bootJar"
 6. Находясь в директории 'my-bank-app', выполнить команду "docker buildx bake". Будут собраны имиджи всех модулей.
@@ -14,6 +14,9 @@
 8. Добавить в Helm библиотеки Codecentric и Bitnami командами:
     - 'helm repo add codecentric https://codecentric.github.io/helm-charts'
     - 'helm repo add bitnami https://charts.bitnami.com/bitnami'
+    - 'helm repo add zipkin https://zipkin.io/zipkin-helm'
+    - 'helm repo add kafka-repo https://helm-charts.itboon.top/kafka'
+    - 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
     - 'helm repo update' 
 9. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
 10. Запустить проект командой 'helm install account-chart account-chart/' 

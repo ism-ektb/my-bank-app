@@ -6,19 +6,19 @@ target "account" {
 
   context = "./my-bank-account-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-account:1.2.4"]
+  tags = ["my-bank-account:1.2.6"]
 }
 
 target "cash" {
   context = "./my-bank-cash-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-cash:1.2.6"]
+  tags = ["my-bank-cash:1.2.17"]
 }
 
 target "transfer" {
   context = "./my-bank-transfer-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-transfer:1.2.3"]
+  tags = ["my-bank-transfer:1.2.7"]
 }
 
 target "front" {

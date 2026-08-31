@@ -29,5 +29,8 @@ dependencies:
 - name: zipkin
   repository: https://zipkin.io/zipkin-helm
   version: 0.5.0
-digest: sha256:3a4fe45de3f67521db56188be906fb77fd9f25eefb5e0b246e48514852efd313
-generated: "2026-08-27T18:50:50.8658804+05:00"
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 29.27.0
+digest: sha256:c798b3497390f85cf0d757eeba1793648f7ab0683b114a2541daaa2b710e4833
+generated: "2026-08-30T20:20:09.0035011+05:00"

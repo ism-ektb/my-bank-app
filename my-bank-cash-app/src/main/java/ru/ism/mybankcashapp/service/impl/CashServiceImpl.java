@@ -1,5 +1,7 @@
 package ru.ism.mybankcashapp.service.impl;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -26,14 +28,18 @@ public class CashServiceImpl implements CashService {
     private final Map<Action, Function<CashMoney, Mono<Void>>> actionHandlers;
     private final String accountUrl;
     private final NotificationCashService notificationService;
+    private final MeterRegistry meterRegistry;
+ //   private final Counter counter;
 
     public CashServiceImpl(WebClient webClient,
                            @Value("${bank.accounts-service.base-url}") String accountUrl,
-                           NotificationCashService notificationService) {
+                           NotificationCashService notificationService, MeterRegistry meterRegistry) {
         this.webClient = webClient;
         this.accountUrl = accountUrl;
         this.actionHandlers = Map.of(Action.PUT, this::addCash, Action.GET, this::reduceCash);
         this.notificationService = notificationService;
+        this.meterRegistry = meterRegistry;
+      //  this.counter = Counter.builder("error_cash_service").register(this.meterRegistry);
     }
 
     @Override
@@ -49,9 +55,12 @@ public class CashServiceImpl implements CashService {
                 .bodyValue(cashMoney)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                   meterRegistry.counter("error_cash_service", "login", cashMoney.login()).increment();
                     return Mono.error(new ClientException("CashService client Error. Status code: " + responseEntity.statusCode()));
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                 //  counter.increment();
+                    meterRegistry.counter("error_cash_service", "login", cashMoney.login()).increment();
                     return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(Void.class)
@@ -66,9 +75,13 @@ public class CashServiceImpl implements CashService {
                 .bodyValue(cashMoney)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                   // counter.increment();
+                    meterRegistry.counter("error_cash_service", "login", cashMoney.login()).increment();
                     return Mono.error(new ClientException("CashService client Error. Status code: " + responseEntity.statusCode()));
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    //counter.increment();
+                    meterRegistry.counter("error_cash_service", "login", cashMoney.login()).increment();
                     return Mono.error(new ServerException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(Void.class)

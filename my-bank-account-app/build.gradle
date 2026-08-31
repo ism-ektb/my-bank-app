@@ -23,6 +23,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation("org.springframework.kafka:spring-kafka")
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'  // Мост между Micrometer и Brave
+    implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave' // Библиотека для отправки спанов в zipkin
     implementation 'io.r2dbc:r2dbc-proxy'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

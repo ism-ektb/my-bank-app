@@ -1,5 +1,6 @@
 package ru.ism.mybankcashapp.service.impl;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.*;
@@ -20,6 +21,7 @@ class CashServiceImplTest {
     public MockWebServer mockAccount;
     private CashServiceImpl cashService;
     private final NotificationCashServiceImpl notificationCashService = mock(NotificationCashServiceImpl.class);
+    private final MeterRegistry meterRegistry = mock(MeterRegistry.class);
 
     @BeforeEach
     void initialize() throws IOException {
@@ -28,7 +30,7 @@ class CashServiceImplTest {
 
         String baseUrl = String.format("http://localhost:%s",
                 mockAccount.getPort());
-        cashService = new CashServiceImpl(WebClient.builder().build(), baseUrl, notificationCashService);
+        cashService = new CashServiceImpl(WebClient.builder().build(), baseUrl, notificationCashService, meterRegistry);
     }
 
     @AfterEach
@@ -60,5 +62,6 @@ class CashServiceImplTest {
                 .build();
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         assertThrows(Exception.class, () -> cashService.cash(new ActionDto(1L, Action.PUT), token).block());
+        verify(meterRegistry).counter(anyString(), anyString(), anyString());
     }
 }

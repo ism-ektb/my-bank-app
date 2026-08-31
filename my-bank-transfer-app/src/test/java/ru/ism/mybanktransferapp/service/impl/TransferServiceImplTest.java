@@ -1,5 +1,7 @@
 package ru.ism.mybanktransferapp.service.impl;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.*;
@@ -24,7 +26,7 @@ class TransferServiceImplTest {
     public MockWebServer mockAccount;
     NotificationTransferServiceImpl notificationTransferService = Mockito.mock(NotificationTransferServiceImpl.class);
     private TransferServiceImpl transferService;
-
+    private MeterRegistry meterRegistry = Mockito.mock(MeterRegistry.class);
 
 
     @BeforeEach
@@ -33,7 +35,7 @@ class TransferServiceImplTest {
         mockAccount.start();
         String baseUrl = String.format("http://localhost:%s",
                 mockAccount.getPort());
-        transferService = new TransferServiceImpl(WebClient.builder().build(), baseUrl, notificationTransferService);
+        transferService = new TransferServiceImpl(WebClient.builder().build(), baseUrl, notificationTransferService, meterRegistry);
     }
 
     @AfterEach
@@ -53,6 +55,7 @@ class TransferServiceImplTest {
                 .build();
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         transferService.transfer(new TransferRequest("user", 10L), token).block();
+        verify(meterRegistry, never()).counter(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -63,7 +66,7 @@ class TransferServiceImplTest {
                 .setBody("{\"login\": \"testUser\", \"balance\": 1}"));
         mockAccount.enqueue(new MockResponse().setResponseCode(200));
         when(notificationTransferService.sendNotification(any())).thenReturn(Mono.empty());
-
+        when(meterRegistry.counter(anyString(), anyString(), anyString())).thenReturn(Mockito.mock(Counter.class));
         Jwt jwt = Jwt.withTokenValue("testToken")
                 .header("alg", "HS256")
                 .claim("preferred_username", "testUser")
@@ -71,6 +74,7 @@ class TransferServiceImplTest {
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         assertThrows(ValidationException.class, () -> transferService.transfer(
                 new TransferRequest("user", 10L), token).block());
+        verify(meterRegistry).counter(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -89,5 +93,6 @@ class TransferServiceImplTest {
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         assertThrows(Exception.class, () -> transferService.transfer(
                 new TransferRequest("user", 10L), token).block());
+        verify(meterRegistry).counter(anyString(), anyString(), anyString());
     }
 }

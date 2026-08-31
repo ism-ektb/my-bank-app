@@ -30,7 +30,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:5.4.0'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'  // Мост между Micrometer и Brave
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave' // Библиотека для отправки спанов в zipkin
-
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 dependencyManagement {

@@ -27,7 +27,7 @@ account-app:
   image:
     repository: my-bank-account
     pullPolicy: IfNotPresent
-    tag: "1.2.4"
+    tag: "1.2.6"
   database:
     url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
     username: user1
@@ -109,7 +109,7 @@ cash-app:
   image:
     repository: my-bank-cash
     pullPolicy: IfNotPresent
-    tag: "1.2.6"
+    tag: "1.2.17"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
@@ -125,7 +125,7 @@ transfer-app:
   image:
     repository: my-bank-transfer
     pullPolicy: IfNotPresent
-    tag: "1.2.3"
+    tag: "1.2.7"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
@@ -154,3 +154,43 @@ kafka-app:
 
 zipkin-app:
   enable: true
+  service:
+    type: LoadBalancer
+    port: 9411
+
+prometheus-app:
+  enabled: false
+  extraScrapeConfigs: |
+    - job_name: 'account-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['{{ .Release.Name }}-account-app:8082']
+    - job_name: 'cash-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['{{ .Release.Name }}-cash-app:8083']
+    - job_name: 'transfer-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['{{ .Release.Name }}-transfer-app:8085']
+  serverFiles:
+  ## Alerts configuration
+  ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+    alerting_rules.yml:
+      groups:
+        - name: user_error.rules
+          rules:
+            - alert: ManyErrorCash
+              expr: 'sum(rate(error_cash_service_total[5m])) > 0.01'
+              labels:
+                severity: warning
+              annotations:
+                summary: "Ошибки при снятии денег со счета"
+                description: "Количество ошибок при снятии денег превысило 5 за 5 минут"
+            - alert: ManyErrorTransfer
+              expr: 'sum(rate(error_transfer_service_total[5m])) > 0.01'
+              labels:
+                severity: warning
+              annotations:
+                summary: "Ошибки при перевода денег со счета"
+                description: "Количество ошибок при переводе денег превысило 5 за 5 минут"
