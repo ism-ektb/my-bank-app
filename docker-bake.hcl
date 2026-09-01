@@ -18,7 +18,7 @@ target "cash" {
 target "transfer" {
   context = "./my-bank-transfer-app"
   dockerfile = "Dockerfile"
-  tags = ["my-bank-transfer:1.2.7"]
+  tags = ["my-bank-transfer:1.2.11"]
 }
 
 target "front" {

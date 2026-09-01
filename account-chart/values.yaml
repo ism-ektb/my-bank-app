@@ -125,7 +125,7 @@ transfer-app:
   image:
     repository: my-bank-transfer
     pullPolicy: IfNotPresent
-    tag: "1.2.7"
+    tag: "1.2.11"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
@@ -159,7 +159,15 @@ zipkin-app:
     port: 9411
 
 prometheus-app:
-  enabled: false
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+
   extraScrapeConfigs: |
     - job_name: 'account-service'
       metrics_path: /actuator/prometheus
@@ -194,3 +202,16 @@ prometheus-app:
               annotations:
                 summary: "Ошибки при перевода денег со счета"
                 description: "Количество ошибок при переводе денег превысило 5 за 5 минут"
+
+grafana-app:
+  adminPassword: admin
+  serverFiles:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://{{ .Release.Name }}-prometheus-app-server:9090
+          access: proxy
+          isDefault: true
+

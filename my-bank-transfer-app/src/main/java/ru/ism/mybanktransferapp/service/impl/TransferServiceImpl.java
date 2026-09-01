@@ -1,6 +1,5 @@
 package ru.ism.mybanktransferapp.service.impl;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
@@ -21,7 +20,6 @@ public class TransferServiceImpl implements TransferService {
     private final String accountUrl;
     private final NotificationTransferService notificationService;
     private final MeterRegistry registry;
-    private final Counter counter;
 
     public TransferServiceImpl(WebClient webClient,
                                @Value("${bank.accounts-service.base-url}") String accountUrl,
@@ -30,35 +28,29 @@ public class TransferServiceImpl implements TransferService {
         this.accountUrl = accountUrl;
         this.notificationService = notificationService;
         this.registry = registry;
-        this.counter = Counter.builder("error_transfer_service").register(registry);
     }
 
     @Override
     public Mono<Void> transfer(TransferRequest transferRequest, JwtAuthenticationToken jwtAuthenticationToken) {
         String senderLogin = jwtAuthenticationToken.getToken().getClaimAsString("preferred_username");
         return checkMoney(transferRequest.sum(), senderLogin)
-                .then(transferMoney(transferRequest.name(), senderLogin, transferRequest.sum()));
+                .then(transferMoney(transferRequest.name(), senderLogin, transferRequest.sum()))
+                .doOnError(e -> registry.counter("error_transfer_service", "senderLogin", senderLogin, "reviverName", transferRequest.name()).increment());
     }
 
     private Mono<Void> checkMoney(long amount, String senderLogin) {
-        String str = senderLogin;
         return webClient.get()
                 .uri(accountUrl + "/account/" + senderLogin)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
-                    counter.increment();
                     return Mono.error(new ClientException("TransferService client Error. Status code: " + responseEntity.statusCode()));
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
-                    counter.increment();
                     return Mono.error(new ClientException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(AccountResponseDto.class)
                 .filter(dto -> dto.balance() >= amount)
                 .switchIfEmpty(Mono.error(new ValidationException("Sender have not enough money")))
-                .doOnError(throwable -> {
-                    counter.increment();
-                })
                 .then();
 
     }

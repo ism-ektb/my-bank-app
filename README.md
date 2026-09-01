@@ -20,6 +20,9 @@
     - 'helm repo update' 
 9. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
 10. Запустить проект командой 'helm install account-chart account-chart/' 
+11. Для подключения к Grafana необходимо открыть порт командой 'kubectl port-forward service/account-chart-grafana-app 3000:80' 
+12. Для входа в Grafana введите login - admin и пароль - admin
+13. Dashboard Grafana находится в папке grafana корневой директории проекта. Ее надо импортировать самостоятельно.
 ## Терминал немного зависнет (у меня на пару минут). Он будет ждать пока контейнер с liquibase выполнит свою работу.
 
 Запуск занимает продолжительное время (особенно Keycloak). У меня на компьютере он занимает несколько минут. 
