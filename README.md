@@ -17,6 +17,7 @@
     - 'helm repo add zipkin https://zipkin.io/zipkin-helm'
     - 'helm repo add kafka-repo https://helm-charts.itboon.top/kafka'
     - 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
+    - 'helm repo add grafana https://grafana.github.io/helm-charts'
     - 'helm repo update' 
 9. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
 10. Запустить проект командой 'helm install account-chart account-chart/' 
