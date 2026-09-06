@@ -27,7 +27,7 @@ account-app:
   image:
     repository: my-bank-account
     pullPolicy: IfNotPresent
-    tag: "1.2.6"
+    tag: "1.3.1"
   database:
     url: r2dbc:postgresql://{{ .Release.Name }}-account-db:5432/market1
     username: user1
@@ -76,7 +76,7 @@ front-app:
   image:
     repository: my-bank-front
     pullPolicy: IfNotPresent
-    tag: "1.2.3"
+    tag: "1.3.1"
   service_url:
     zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     gateway_host: http://{{ .Release.Name }}-gateway-app:8081
@@ -93,7 +93,7 @@ gateway-app:
   image:
     repository: my-bank-gateway
     pullPolicy: IfNotPresent
-    tag: "1.2.3"
+    tag: "1.3.1"
   service_url:
     zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
@@ -109,7 +109,7 @@ cash-app:
   image:
     repository: my-bank-cash
     pullPolicy: IfNotPresent
-    tag: "1.2.17"
+    tag: "1.3.1"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
@@ -125,7 +125,7 @@ transfer-app:
   image:
     repository: my-bank-transfer
     pullPolicy: IfNotPresent
-    tag: "1.2.11"
+    tag: "1.3.1"
   service_url:
     keycloak_url: http://{{ .Release.Name }}-keycloak-app-http:80/auth/realms/bank-realm
     account_url: http://{{ .Release.Name }}-account-app:8082
@@ -141,7 +141,7 @@ notification-app:
   image:
     repository: my-bank-notification
     pullPolicy: IfNotPresent
-    tag: "1.2.1"
+    tag: "1.3.1"
   service_url:
     zipkin_url: http://{{ .Release.Name }}-zipkin-app:9411/api/v2/spans
     kafka_url: http://{{ .Release.Name }}-kafka-app-broker:9092
@@ -215,3 +215,51 @@ grafana-app:
           access: proxy
           isDefault: true
 
+fluent-app:
+  image:
+    repository: docker.io/fluent/fluent-bit
+    tag: 5.1.1
+  config:
+    outputs: |
+      [OUTPUT]
+          Name http
+          Match *
+          Host {{ .Release.Name }}-logstash-app-headless
+          Port 5044
+          Format json          
+  
+logstash-app:
+  image: "docker.elastic.co/logstash/logstash-oss"
+
+
+  logstashPipeline:
+    logstash.conf: |
+      input {
+        http {
+          port => 5044          
+        }
+      }
+      filter {
+        grok {
+          match => { "log" => ["%{TIMESTAMP_ISO8601:timestamp}  %{WORD:level} %{NUMBER:number} --- \[%{DATA:service}\] \[     %{DATA:tread}\] \[%{DATA:trace}\] %{DATA:class} %{GREEDYDATA:log}", "%{TIMESTAMP_ISO8601:timestamp}  %{WORD:level} %{NUMBER:number} --- \[%{DATA:service}\] \[%{DATA:tread}\] \[%{DATA:trace}\] %{DATA:class} %{GREEDYDATA:log}"] }
+          break_on_match => false
+        }
+        if ![trace] {
+          drop {}
+        }
+        mutate {
+          gsub => ["trace", "-", " "]
+        }
+        grok {
+          match => { "trace" => "%{DATA:traceid} %{GREEDYDATA:spanid}" }
+        }
+      prune {
+        whitelist_names => ["log", "timestamp", "level", "traceid", "service", "spanid"]
+        }
+      }
+      output {
+        elasticsearch {
+          hosts => ["http://host.docker.internal:9200"]          
+          index => "bank3-logs-%{+YYYY.MM.dd}"
+        }
+      }

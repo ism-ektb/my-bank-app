@@ -1,5 +1,7 @@
 package ru.ism.mybankfrontapp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -38,11 +40,14 @@ import java.time.format.DateTimeFormatter;
 @Controller
 public class MainController {
 
+    Logger log = LoggerFactory.getLogger(MainController.class);
+
     @Autowired
     private TransferClient transferClient;
 
     @PostMapping("/logout1")
     public Mono<String> logout(OAuth2AuthenticationToken token) {
+        log.info("Logout called login: - {}", token.getPrincipal().getName());
         String id = ((OidcUser) token.getPrincipal()).getIdToken().getTokenValue();
         return Mono.empty().thenReturn("redirect:http://localhost/auth/realms/bank-realm/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A8084%2Flogout&id_token_hint=" + id);
     }
@@ -53,12 +58,14 @@ public class MainController {
      */
     @GetMapping
     public Mono<String> index() {
+        log.info("redirect:/account");
         return Mono.empty().thenReturn("redirect:/account");
     }
 
     @GetMapping("/account")
     public Mono<String> account(Model model, @RequestParam(required = false, name = "error", defaultValue = "") String error,
-                                @RequestParam(required = false, value = "info", defaultValue = "") String info) {
+                                @RequestParam(required = false, value = "info", defaultValue = "") String info, OAuth2AuthenticationToken token) {
+        log.info("account requested login = {}", token.getPrincipal().getName());
         return transferClient.findAllAccounts()
                 .collectList()
                 .map(list -> model.addAttribute("accounts", list)).then(
@@ -79,8 +86,12 @@ public class MainController {
     }
 
     @PostMapping("/account")
-    public Mono<String> editAccount(ServerWebExchange exchange) {
+    public Mono<String> editAccount(ServerWebExchange exchange, OAuth2AuthenticationToken token) {
+        log.info("edit account login = {}", token.getPrincipal().getName());
         return exchange.getFormData()
+                .doOnSuccess(formData -> {
+                    log.info("Edit account request for login = {}", formData.getFirst("name"));
+                })
                 .flatMap(formData ->
                         transferClient.updateAccount(formData.getFirst("name"),
                                 LocalDate.parse(formData.getFirst("birthdate"))))
@@ -89,20 +100,28 @@ public class MainController {
     }
 
     @PostMapping("/cash")
-    public Mono<String> cashMoney(Model model, ServerWebExchange exchange) {
+    public Mono<String> cashMoney(Model model, ServerWebExchange exchange, OAuth2AuthenticationToken token) {
         return exchange.getFormData()
+                .doOnSuccess(formData -> {
+                    log.info("Cash request for login = {}", token.getPrincipal().getName());
+                })
                 .filter(formData -> formData.getFirst("value") != null)
                 .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
+                .doOnError(e -> log.warn("Cash request empty data login = {}", token.getPrincipal().getName()))
                 .flatMap(data -> transferClient.cashMoney(Long.parseLong(data.getFirst("value")), Action.valueOf(data.getFirst("action"))))
                 .thenReturn("redirect:/account?info=ok")
                 .onErrorReturn("redirect:/account?error=error");
     }
 
     @PostMapping("/transfer")
-    public Mono<String> transferMoney(ServerWebExchange exchange) {
+    public Mono<String> transferMoney(ServerWebExchange exchange, OAuth2AuthenticationToken token) {
         return exchange.getFormData()
+                .doOnSuccess(formData -> {
+                    log.info("Transfer request for login = {}", token.getPrincipal().getName());
+                })
                 .filter(formData -> formData.getFirst("value") != null && formData.getFirst("login") != null)
                 .switchIfEmpty(Mono.error(new RuntimeException("Empty data")))
+                .doOnError(e -> log.warn("Cash request empty data login= {}", token.getPrincipal().getName()))
                 .flatMap(data -> transferClient.transfer(Long.parseLong(data.getFirst("value")), data.getFirst("login")))
                 .thenReturn("redirect:/account?info=ok")
                 .onErrorReturn("redirect:/account?error=error");

@@ -35,5 +35,11 @@ dependencies:
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 10.5.15
-digest: sha256:192cf5a3ab3018bf1b985d01a37ed2f279ce689548eb3e537b601105a023ce85
-generated: "2026-09-01T15:20:43.3568869+05:00"
+- name: fluent-bit
+  repository: https://fluent.github.io/helm-charts
+  version: 0.58.1
+- name: logstash
+  repository: https://helm.elastic.co
+  version: 8.5.1
+digest: sha256:ae320670b3f6479feb706998ab2684b8bf4be03450998ea62d68039d8d2c26d8
+generated: "2026-09-05T07:08:13.4312046+05:00"

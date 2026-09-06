@@ -76,3 +76,13 @@ dependencies:
     version: 10.5.15
     repository: https://grafana.github.io/helm-charts
     alias: grafana-app
+
+  - name: fluent-bit
+    version: 0.58.1
+    repository: https://fluent.github.io/helm-charts
+    alias: fluent-app
+
+  - name: logstash
+    version: 8.5.1
+    repository: https://helm.elastic.co
+    alias: logstash-app
