@@ -21,6 +21,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'  // Мост между Micrometer и Brave
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave' // Библиотека для отправки спанов в zipkin
+    implementation 'io.r2dbc:r2dbc-proxy'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.projectreactor:reactor-test'
@@ -39,6 +44,9 @@ dependencies {
     testImplementation('org.testcontainers:r2dbc:1.21.4')
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier:4.3.4")
     testImplementation 'io.rest-assured:spring-web-test-client:6.0.1'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
 }
 
 tasks.named('test') {

@@ -21,7 +21,7 @@ public class WebClientConfig {
 
     @Bean
     WebClient gatewayWebClient(ReactiveClientRegistrationRepository clientRegistrationRepository,
-                               ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+                               ServerOAuth2AuthorizedClientRepository authorizedClientRepository, WebClient.Builder builder) {
         ServerOAuth2AuthorizedClientExchangeFilterFunction oauth =
                 new ServerOAuth2AuthorizedClientExchangeFilterFunction(clientRegistrationRepository, authorizedClientRepository);
         oauth.setDefaultOAuth2AuthorizedClient(true);
@@ -31,7 +31,7 @@ public class WebClientConfig {
                 .doOnConnected(conn ->
                         conn.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS))
                                 .addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS)));
-        return WebClient.builder()
+        return builder
                 .filter(oauth)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();

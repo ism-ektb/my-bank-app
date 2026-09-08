@@ -6,7 +6,7 @@
 
 1. Необходимо клонировать проект на локальный компьютер.
 2. Зайти в папку 'my-bank-app'
-3. Сменить ветку с 'main' на 'sprint_10'
+3. Сменить ветку с 'main' на 'sprint_11'
 4. Открыть проект в среде разработки
 5. Соберём проект вместе с запуском тестов командой "gradle bootJar"
 6. Находясь в директории 'my-bank-app', выполнить команду "docker buildx bake". Будут собраны имиджи всех модулей.
@@ -14,9 +14,18 @@
 8. Добавить в Helm библиотеки Codecentric и Bitnami командами:
     - 'helm repo add codecentric https://codecentric.github.io/helm-charts'
     - 'helm repo add bitnami https://charts.bitnami.com/bitnami'
+    - 'helm repo add zipkin https://zipkin.io/zipkin-helm'
+    - 'helm repo add kafka-repo https://helm-charts.itboon.top/kafka'
+    - 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
+    - 'helm repo add grafana https://grafana.github.io/helm-charts'
+    - 'helm repo add elastic https://helm.elastic.co'
     - 'helm repo update' 
 9. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
 10. Запустить проект командой 'helm install account-chart account-chart/' 
+11. Для подключения к Grafana необходимо открыть порт командой 'kubectl port-forward service/account-chart-grafana-app 3000:80' 
+12. Для входа в Grafana введите login - admin и пароль - admin
+13. Dashboard Grafana находится в папке grafana корневой директории проекта. Ее надо импортировать самостоятельно.
+14. **Ввиду особенностей лицензирования Elasticsearch его надо запустить в отдельном контейнере. Для этого надо зайти в папку "/elk" и запустить docker-compose**
 ## Терминал немного зависнет (у меня на пару минут). Он будет ждать пока контейнер с liquibase выполнит свою работу.
 
 Запуск занимает продолжительное время (особенно Keycloak). У меня на компьютере он занимает несколько минут. 

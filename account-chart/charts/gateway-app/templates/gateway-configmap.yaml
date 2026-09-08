@@ -7,3 +7,4 @@ data:
   ACCOUNT.HOST: {{ tpl .Values.service_url.account_url . | quote}}
   CASH.URL: {{ tpl .Values.service_url.cash_url . | quote}}
   TRANSFER.URL: {{ tpl .Values.service_url.transfer_url . | quote}}
+  ZIPKIN.URL: {{ tpl .Values.service_url.zipkin_url . | quote}}

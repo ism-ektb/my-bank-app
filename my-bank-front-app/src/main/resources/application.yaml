@@ -31,3 +31,13 @@ spring:
             jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
   application:
     name: my-bank-front-app
+  reactor:
+    context-propagation: auto
+
+management:
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN.URL:http://localhost:9411/api/v2/spans}
+  tracing:
+    sampling:
+      probability: 1

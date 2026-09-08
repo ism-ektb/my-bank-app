@@ -23,12 +23,29 @@ spring:
             token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
             user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
             jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
+  kafka:
+    bootstrap-servers: ${KAFKA.URL:kafka-broker-0.kafka-headless.default.svc.cluster.local:9092}
+    producer:
+      acks: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    template:
+      observation-enabled: true
+  reactor:
+    context-propagation: auto
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN.URL:http://localhost:9411/api/v2/spans}
+  tracing:
+    sampling:
+      probability: 1
+    enabled: true
 
 bank:
   accounts-service:

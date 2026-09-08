@@ -23,5 +23,23 @@ dependencies:
 - name: transfer-app
   repository: file://./charts/transfer-app
   version: 0.1.0
-digest: sha256:af8f81294ed0ce26adaf954e6596b0e245ade2b1732659e2c6dcd8c3641f30d4
-generated: "2026-08-06T16:02:41.6411519+05:00"
+- name: kafka
+  repository: https://helm-charts.itboon.top/kafka/
+  version: 18.0.1
+- name: zipkin
+  repository: https://zipkin.io/zipkin-helm
+  version: 0.5.0
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 29.27.0
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 10.5.15
+- name: fluent-bit
+  repository: https://fluent.github.io/helm-charts
+  version: 0.58.1
+- name: logstash
+  repository: https://helm.elastic.co
+  version: 8.5.1
+digest: sha256:ae320670b3f6479feb706998ab2684b8bf4be03450998ea62d68039d8d2c26d8
+generated: "2026-09-05T07:08:13.4312046+05:00"

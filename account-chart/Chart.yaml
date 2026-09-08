@@ -2,8 +2,8 @@ apiVersion: v2
 name: account-chart
 description: Umbrella chart for Customer and Order microservices
 type: application
-version: 0.1.0
-appVersion: "1.0.0"
+version: 0.1.1
+appVersion: "1.0.1"
 
 dependencies:
   - name: postgresql
@@ -53,3 +53,36 @@ dependencies:
     repository: "file://./charts/transfer-app"
     alias: transfer-app
     condition: transfer-app.enabled
+
+  - name: kafka
+    version: 18.0.1
+    repository: https://helm-charts.itboon.top/kafka/
+    alias: kafka-app
+    condition: kafka-app.enabled
+
+  - name: zipkin
+    version: 0.5.0
+    repository: https://zipkin.io/zipkin-helm
+    alias: zipkin-app
+    condition: zipkin-app.enable
+
+  - name: prometheus
+    version: 29.27.0
+    repository: https://prometheus-community.github.io/helm-charts
+    alias: prometheus-app
+    condition: prometheus-app.enable
+
+  - name: grafana
+    version: 10.5.15
+    repository: https://grafana.github.io/helm-charts
+    alias: grafana-app
+
+  - name: fluent-bit
+    version: 0.58.1
+    repository: https://fluent.github.io/helm-charts
+    alias: fluent-app
+
+  - name: logstash
+    version: 8.5.1
+    repository: https://helm.elastic.co
+    alias: logstash-app

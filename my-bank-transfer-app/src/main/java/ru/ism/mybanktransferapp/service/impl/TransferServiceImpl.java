@@ -1,5 +1,6 @@
 package ru.ism.mybanktransferapp.service.impl;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -9,6 +10,7 @@ import reactor.core.publisher.Mono;
 import ru.ism.mybankdto.exception.ClientException;
 import ru.ism.mybankdto.exception.ValidationException;
 import ru.ism.mybankdto.module.*;
+import ru.ism.mybanktransferapp.service.NotificationTransferService;
 import ru.ism.mybanktransferapp.service.TransferService;
 
 @Service
@@ -16,21 +18,24 @@ public class TransferServiceImpl implements TransferService {
 
     private final WebClient webClient;
     private final String accountUrl;
-    private final String notificationUrl;
+    private final NotificationTransferService notificationService;
+    private final MeterRegistry registry;
 
     public TransferServiceImpl(WebClient webClient,
                                @Value("${bank.accounts-service.base-url}") String accountUrl,
-                               @Value("${bank.notification-url}") String notificationUrl) {
+                               NotificationTransferService notificationService, MeterRegistry registry) {
         this.webClient = webClient;
         this.accountUrl = accountUrl;
-        this.notificationUrl = notificationUrl;
+        this.notificationService = notificationService;
+        this.registry = registry;
     }
 
     @Override
     public Mono<Void> transfer(TransferRequest transferRequest, JwtAuthenticationToken jwtAuthenticationToken) {
         String senderLogin = jwtAuthenticationToken.getToken().getClaimAsString("preferred_username");
         return checkMoney(transferRequest.sum(), senderLogin)
-                .then(transferMoney(transferRequest.name(), senderLogin, transferRequest.sum()));
+                .then(transferMoney(transferRequest.name(), senderLogin, transferRequest.sum()))
+                .doOnError(e -> registry.counter("error_transfer_service", "senderLogin", senderLogin, "reviverName", transferRequest.name()).increment());
     }
 
     private Mono<Void> checkMoney(long amount, String senderLogin) {
@@ -47,6 +52,7 @@ public class TransferServiceImpl implements TransferService {
                 .filter(dto -> dto.balance() >= amount)
                 .switchIfEmpty(Mono.error(new ValidationException("Sender have not enough money")))
                 .then();
+
     }
 
     private Mono<Void> transferMoney(String receiverLogin, String senderLogin, long amount) {
@@ -55,17 +61,16 @@ public class TransferServiceImpl implements TransferService {
                 .bodyValue(new Transfer(senderLogin, receiverLogin, amount))
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseEntity -> {
+                    registry.counter("error_transfer_service", "login", senderLogin).increment();
                     return Mono.error(new ClientException("TransferService client Error. Status code: " + responseEntity.statusCode()));
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, responseEntity -> {
+                    registry.counter("error_transfer_service", "login", senderLogin).increment();
                     return Mono.error(new ClientException("AccountService server Error. Status code: " + responseEntity.statusCode()));
                 })
                 .bodyToMono(Void.class)
-                .then(webClient.post()
-                        .uri(notificationUrl + "/notification")
-                        .bodyValue(new Notification(String.format("Переведены средства со счета %s на счет %s в сумме %d", senderLogin, receiverLogin, amount)))
-                        .retrieve()
-                        .bodyToMono(Void.class)
+                .then(notificationService.sendNotification(new Notification(
+                                String.format("Переведены средства со счета %s на счет %s в сумме %d", senderLogin, receiverLogin, amount)))
                         .onErrorResume(throwable -> Mono.empty()));
     }
 }
