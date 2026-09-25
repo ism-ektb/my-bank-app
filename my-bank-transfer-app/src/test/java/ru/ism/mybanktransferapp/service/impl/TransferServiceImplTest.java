@@ -21,6 +21,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Модульные тесты сервиса переводов.
+ *
+ * <p>Внешний аккаунт-сервис заменён HTTP-сервером-заглушкой, чтобы проверить
+ * успешные операции, недостаток средств и ошибки внешнего сервиса.</p>
+ */
 class TransferServiceImplTest {
 
     public MockWebServer mockAccount;
@@ -29,6 +35,11 @@ class TransferServiceImplTest {
     private MeterRegistry meterRegistry = Mockito.mock(MeterRegistry.class);
 
 
+    /**
+     * Запускает HTTP-сервер-заглушку и создаёт тестируемый сервис.
+     *
+     * @throws IOException если сервер не удалось запустить
+     */
     @BeforeEach
     void initialize() throws IOException {
         mockAccount = new MockWebServer();
@@ -38,11 +49,19 @@ class TransferServiceImplTest {
         transferService = new TransferServiceImpl(WebClient.builder().build(), baseUrl, notificationTransferService, meterRegistry);
     }
 
+    /**
+     * Останавливает HTTP-сервер-заглушку после каждого теста.
+     *
+     * @throws IOException если сервер не удалось закрыть
+     */
     @AfterEach
     void cleanUp() throws IOException {
         mockAccount.close();
     }
 
+    /**
+     * Проверяет успешное выполнение перевода.
+     */
     @Test
     void transfer() {
         mockAccount.enqueue(new MockResponse().setResponseCode(200).setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).setBody("{\"login\": \"testUser\", \"balance\": 100}"));
@@ -58,6 +77,9 @@ class TransferServiceImplTest {
         verify(meterRegistry, never()).counter(anyString(), anyString(), anyString());
     }
 
+    /**
+     * Проверяет ошибку перевода при недостаточном балансе отправителя.
+     */
     @Test
     void transfer_balance_not_enough() {
         mockAccount.enqueue(new MockResponse()
@@ -77,6 +99,9 @@ class TransferServiceImplTest {
         verify(meterRegistry).counter(anyString(), anyString(), anyString());
     }
 
+    /**
+     * Проверяет обработку ошибки аккаунт-сервиса.
+     */
     @Test
     void transfer_account_service_error() {
         mockAccount.enqueue(new MockResponse()

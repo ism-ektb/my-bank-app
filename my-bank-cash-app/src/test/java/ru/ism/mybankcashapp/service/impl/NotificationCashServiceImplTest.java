@@ -15,6 +15,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Интеграционные тесты сервиса уведомлений cash-сервиса.
+ *
+ * <p>Проверяют публикацию уведомлений в Kafka-топик операций с наличными
+ * средствами.</p>
+ */
 @SpringBootTest
 @EmbeddedKafka(topics = {"cash"})
 class NotificationCashServiceImplTest {
@@ -25,6 +31,9 @@ class NotificationCashServiceImplTest {
     @Autowired
     private NotificationCashServiceImpl notificationCashService;
 
+    /**
+     * Проверяет отправку уведомления в Kafka-топик cash-сервиса.
+     */
     @Test
     void sendNotification() {
         try (var consumerForTest = new DefaultKafkaConsumerFactory<>(

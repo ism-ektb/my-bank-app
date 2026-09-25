@@ -23,6 +23,12 @@ import java.time.LocalDate;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
+/**
+ * Интеграционные тесты REST-эндпоинтов {@link AccountController}.
+ *
+ * <p>Тесты проверяют HTTP-статусы, валидацию входных данных и ограничения
+ * доступа для различных ролей и полномочий.</p>
+ */
 @WebFluxTest(controllers = AccountController.class)
 @Import(SecurityConfig.class)
 class AccountControllerTest {
@@ -33,6 +39,9 @@ class AccountControllerTest {
     private AccountService accountService;
 
 
+    /**
+     * Проверяет получение счёта по логину пользователя с ролью сервиса.
+     */
     @Test
     void findByName() {
         when(accountService.findByName(anyString())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -44,6 +53,9 @@ class AccountControllerTest {
         verify(accountService, times(1)).findByName(anyString());
     }
 
+    /**
+     * Проверяет успешное зачисление средств при наличии необходимых полномочий.
+     */
     @Test
     void credit_good_result() {
         when(accountService.reduceSum(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -56,6 +68,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет запрет зачисления средств без полномочия записи счёта.
+     */
     @Test
     void credit_no_role() {
         when(accountService.reduceSum(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -67,6 +82,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет отклонение запроса на зачисление отрицательной суммы.
+     */
     @Test
     void credit_negative_sum() {
         when(accountService.reduceSum(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -79,6 +97,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет успешное списание средств при наличии необходимых полномочий.
+     */
     @Test
     void debit_good_result() {
         when(accountService.addSum(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 1, 1), "", 1L)));
@@ -91,6 +112,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет запрет списания средств без полномочия записи счёта.
+     */
     @Test
     void debit_no_role() {
         when(accountService.addSum(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -102,6 +126,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет отклонение запроса на списание отрицательной суммы.
+     */
     @Test
     void debit_negative_sum() {
         when(accountService.addSum(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -114,6 +141,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет успешное обновление данных счёта пользователем с необходимыми полномочиями.
+     */
     @Test
     void update_good_result() {
         when(accountService.updateAccount(any(), any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -126,6 +156,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет запрет обновления данных счёта без подходящей роли.
+     */
     @Test
     void update_no_role() {
         when(accountService.updateAccount(any(), any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -137,6 +170,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет успешное выполнение перевода между счетами.
+     */
     @Test
     void transfer_good_result() {
         when(accountService.transfer(any())).thenReturn(Mono.empty());
@@ -149,6 +185,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет запрет перевода без полномочия записи счёта.
+     */
     @Test
     void transfer_no_role() {
         when(accountService.transfer(any())).thenReturn(Mono.empty());
@@ -160,6 +199,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет отклонение перевода с отрицательной суммой.
+     */
     @Test
     void transfer_negative_sum() {
         when(accountService.transfer(any())).thenReturn(Mono.empty());
@@ -172,6 +214,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().is4xxClientError();
     }
 
+    /**
+     * Проверяет отклонение перевода со счёта на этот же счёт.
+     */
     @Test
     void transfer_sender_equal_receiver() {
         when(accountService.transfer(any())).thenReturn(Mono.empty());
@@ -185,6 +230,9 @@ class AccountControllerTest {
     }
 
 
+    /**
+     * Проверяет получение списка счетов текущего пользователя.
+     */
     @Test
     void getAllAccounts() {
         when(accountService.findAllWithoutUser(any())).thenReturn(Flux.empty());
@@ -196,6 +244,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет возврат существующего счёта без создания нового.
+     */
     @Test
     void createAccountIfNotExist_accountExist() {
         when(accountService.findAccount(any())).thenReturn(Mono.just(new AccountResponseDto("_", LocalDate.of(1999, 01, 01), "", 1L)));
@@ -208,6 +259,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет создание счёта, если счёт пользователя не найден.
+     */
     @Test
     void createAccountIfNotExist_createAccount() {
         when(accountService.findAccount(any())).thenReturn(Mono.empty());
@@ -220,6 +274,9 @@ class AccountControllerTest {
                 .exchange().expectStatus().isOk();
     }
 
+    /**
+     * Проверяет отказ при отсутствии полномочий для создания счёта.
+     */
     @Test
     void createAccountIfNotExist_no_authority() {
         when(accountService.findAccount(any())).thenReturn(Mono.empty());

@@ -29,6 +29,12 @@ import java.util.concurrent.CountDownLatch;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Интеграционные тесты сервиса управления банковскими счетами.
+ *
+ * <p>Проверяют работу сервиса с PostgreSQL, авторизацией, балансами,
+ * переводами и конкурентными операциями.</p>
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {"spring.liquibase.default-schema=account_service", "spring.liquibase.enabled=true"
 })
 @Testcontainers
@@ -51,6 +57,11 @@ class AccountServiceImplTest {
             new PostgreSQLContainer<>("postgres:15")
                     .withInitScript("schema1.sql");
 
+    /**
+     * Настраивает параметры подключения приложения к тестовой базе данных.
+     *
+     * @param registry реестр динамических свойств Spring
+     */
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
         registry.add("spring.liquibase.url", postgreSQLContainer::getJdbcUrl);
@@ -61,6 +72,9 @@ class AccountServiceImplTest {
         registry.add("spring.r2dbc.password", postgreSQLContainer::getPassword);
     }
 
+    /**
+     * Проверяет поиск счёта пользователя, у которого ещё нет счёта.
+     */
     @Test
     void find_account_if_no_account() {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
@@ -73,6 +87,9 @@ class AccountServiceImplTest {
         assertNull(dto);
     }
 
+    /**
+     * Проверяет создание счёта пользователем с полномочием записи.
+     */
     @Test
     @WithMockUser(authorities = { "account.write" })
     void create_account() {
@@ -87,6 +104,9 @@ class AccountServiceImplTest {
         assertEquals("testUser6", dto.login());
     }
 
+    /**
+     * Проверяет запрет создания счёта без полномочия записи.
+     */
     @Test
     @WithMockUser(authorities = { "account.read" })
     void create_account_no_authorities() {
@@ -99,6 +119,9 @@ class AccountServiceImplTest {
         assertThrows(AuthorizationDeniedException.class, () -> accountService.createAccount(token).block());
     }
 
+    /**
+     * Проверяет обновление данных существующего счёта.
+     */
     @Test
     @WithMockUser(authorities = { "account.write" })
     void update_account() {
@@ -116,10 +139,13 @@ class AccountServiceImplTest {
 
     }
 
-    @Test
     /**
-     * Создаем счет. Пополняем его. Снимаем средства одновременно несколькими потоками
+     * Проверяет корректность параллельного списания средств со счёта.
+     *
+     * <p>Счёт пополняется, после чего несколько потоков одновременно выполняют
+     * списание. Итоговый баланс должен учитывать все успешные операции.</p>
      */
+    @Test
     @WithMockUser(authorities = { "account.write" })
     void cash_integral_test() throws InterruptedException {
         when(notificationService.sendNotification(any())).thenReturn(Mono.empty());
@@ -155,10 +181,10 @@ class AccountServiceImplTest {
     }
 
     /**
-     * Создаем два новых счета. Один пополняем.
-     * В многопоточном режиме переводим средства с одного счета на другой.
-     * Проверяем что бы сумма средств на двух счетах не изменилась.
-     * В ходе теста могут выбрасываться исключения - это его нормальная работа.
+     * Проверяет сохранение общей суммы средств при параллельных переводах.
+     *
+     * <p>Создаются два счёта, после чего несколько потоков переводят средства
+     * между ними в обоих направлениях.</p>
      */
     @Test
     @WithMockUser(authorities = { "account.write" })

@@ -16,6 +16,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Интеграционные тесты сервиса уведомлений аккаунтов.
+ *
+ * <p>Проверяют публикацию уведомлений в топик Kafka, используемый
+ * аккаунт-сервисом.</p>
+ */
 @SpringBootTest
 @EmbeddedKafka(topics = {"account"})
 class NotificationServiceImplTest {
@@ -26,6 +32,9 @@ class NotificationServiceImplTest {
     @Autowired
     private NotificationService notificationService;
 
+    /**
+     * Проверяет отправку уведомления в Kafka-топик аккаунтов.
+     */
     @Test
     void sendNotification() {
 

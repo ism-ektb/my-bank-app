@@ -16,6 +16,11 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Модульные тесты сервиса операций с наличными средствами.
+ *
+ * <p>Для имитации аккаунт-сервиса используется {@link MockWebServer}.</p>
+ */
 class CashServiceImplTest {
 
     public MockWebServer mockAccount;
@@ -23,6 +28,11 @@ class CashServiceImplTest {
     private final NotificationCashServiceImpl notificationCashService = mock(NotificationCashServiceImpl.class);
     private final MeterRegistry meterRegistry = mock(MeterRegistry.class);
 
+    /**
+     * Запускает HTTP-сервер-заглушку перед каждым тестом.
+     *
+     * @throws IOException если сервер не удалось запустить
+     */
     @BeforeEach
     void initialize() throws IOException {
         mockAccount = new MockWebServer();
@@ -33,11 +43,19 @@ class CashServiceImplTest {
         cashService = new CashServiceImpl(WebClient.builder().build(), baseUrl, notificationCashService, meterRegistry);
     }
 
+    /**
+     * Останавливает HTTP-сервер-заглушку после каждого теста.
+     *
+     * @throws IOException если сервер не удалось закрыть
+     */
     @AfterEach
     void cleanup() throws IOException {
         mockAccount.close();
     }
 
+    /**
+     * Проверяет успешную обработку операции пополнения или списания.
+     */
     @Test
     void cash_good_response() {
         mockAccount.enqueue(new MockResponse().setResponseCode(200));
@@ -51,6 +69,9 @@ class CashServiceImplTest {
         cashService.cash(new ActionDto(1L, Action.PUT), token).block();
     }
 
+    /**
+     * Проверяет обработку ошибки аккаунт-сервиса и регистрацию метрики ошибки.
+     */
     @Test
     void cash_400_response() {
         mockAccount.enqueue(new MockResponse().setResponseCode(400));

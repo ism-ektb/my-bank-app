@@ -19,6 +19,16 @@ import ru.ism.mybankdto.module.*;
 import java.util.Objects;
 
 
+/**
+ * Реализация сервиса для управления банковскими счетами.
+ *
+ * <p>Сервис отвечает за обновление данных счетов, поиск учетных записей,
+ * создание новых счетов, пополнение и списание средств, а также переводы между
+ * счетами и отправку уведомлений.</p>
+ *
+ * @author MyBank Team
+ * @version 1.0
+ */
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -26,6 +36,13 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     private final NotificationService notificationService;
 
+    /**
+     * Обновляет данные счёта текущего пользователя.
+     *
+     * @param accountRequestDto новые данные счёта
+     * @param authentication токен аутентификации текущего пользователя
+     * @return реактивный объект с обновлённым профилем счёта
+     */
     @Override
     public Mono<AccountResponseDto> updateAccount(AccountRequestDto accountRequestDto, JwtAuthenticationToken authentication) {
         String login = authentication.getToken().getClaimAsString("preferred_username");
@@ -39,6 +56,12 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountMapper::toAccountResponseDto);
     }
 
+    /**
+     * Ищет счёт текущего пользователя по токену аутентификации.
+     *
+     * @param authentication токен аутентификации пользователя
+     * @return реактивный объект со счётом, если он существует
+     */
     @Override
     public Mono<AccountResponseDto> findAccount(JwtAuthenticationToken authentication) {
         String login = authentication.getToken().getClaimAsString("preferred_username");
@@ -47,10 +70,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Добавляем деньги на счете пользователя и отправляем уведомление об этом
+     * Пополняет счёт пользователя и отправляет уведомление.
      *
-     * @param cashMany
-     * @return
+     * @param cashMany данные о сумме и логине клиента
+     * @return реактивный объект с обновлённым балансом счёта
      */
     @Override
     @Transactional
@@ -69,10 +92,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Снимаем деньги со счета пользователя и отправляем уведомление
+     * Снимает деньги со счёта пользователя и отправляет уведомление.
      *
-     * @param cashMany
-     * @return
+     * @param cashMany данные о сумме и логине клиента
+     * @return реактивный объект с обновлённым балансом счёта
      */
     @Override
     @Transactional
@@ -93,10 +116,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Перевод средств с одного счета на другой в соответствии с запросом
+     * Выполняет перевод средств с одного счёта на другой.
      *
-     * @param transfer
-     * @return
+     * @param transfer параметры перевода: отправитель, получатель и сумма
+     * @return пустой реактивный результат при успешном завершении перевода
      */
     @Override
     @Transactional
@@ -117,6 +140,12 @@ public class AccountServiceImpl implements AccountService {
                         .onErrorResume(e -> Mono.empty()));
     }
 
+    /**
+     * Возвращает данные счёта по логину клиента.
+     *
+     * @param accountName логин клиента
+     * @return реактивный объект с данными счёта
+     */
     @Override
     public Mono<AccountResponseDto> findByName(String accountName) {
         return accountRepository.findByLogin(accountName)
@@ -124,10 +153,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * Поиск всех пользователей за исключением инициатора поиска
+     * Возвращает список счётов всех пользователей, кроме текущего.
      *
-     * @param jwtAuthenticationToken
-     * @return
+     * @param jwtAuthenticationToken токен аутентификации текущего пользователя
+     * @return поток краткой информации о счётах других пользователей
      */
     @Override
     public Flux<AccountShortResponse> findAllWithoutUser(JwtAuthenticationToken jwtAuthenticationToken) {
@@ -137,6 +166,12 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountMapper::toAccountShortResponse);
     }
 
+    /**
+     * Создаёт новый счёт для пользователя при отсутствии существующего.
+     *
+     * @param authentication токен аутентификации пользователя
+     * @return реактивный объект с данными созданного счёта
+     */
     @Override
     @PreAuthorize("hasAuthority('account.write')")
     public Mono<AccountResponseDto> createAccount(JwtAuthenticationToken authentication) {

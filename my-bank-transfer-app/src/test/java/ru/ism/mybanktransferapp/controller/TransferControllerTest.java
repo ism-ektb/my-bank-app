@@ -15,6 +15,11 @@ import ru.ism.mybanktransferapp.service.TransferService;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
+/**
+ * Интеграционные тесты REST-эндпоинта переводов.
+ *
+ * <p>Проверяют успешный перевод, валидацию суммы и ограничения доступа.</p>
+ */
 @WebFluxTest(controllers = TransferController.class)
 @Import(SecurityConfig.class)
 class TransferControllerTest {
@@ -23,6 +28,9 @@ class TransferControllerTest {
     @MockitoBean
     private TransferService transferService;
 
+    /**
+     * Проверяет успешное выполнение перевода с корректными данными.
+     */
     @Test
     void transfer_good_result() {
         when(transferService.transfer(any(), any())).thenReturn(Mono.empty());
@@ -36,6 +44,9 @@ class TransferControllerTest {
                 .expectStatus().isOk();
     }
 
+    /**
+     * Проверяет отклонение перевода с нулевой суммой.
+     */
     @Test
     void transfer_sum_equals_zero() {
         when(transferService.transfer(any(), any())).thenReturn(Mono.empty());
@@ -49,6 +60,9 @@ class TransferControllerTest {
                 .expectStatus().isEqualTo(400);
     }
 
+    /**
+     * Проверяет отказ в доступе без полномочия записи счёта.
+     */
     @Test
     void transfer_bad_authorities() {
         when(transferService.transfer(any(), any())).thenReturn(Mono.empty());

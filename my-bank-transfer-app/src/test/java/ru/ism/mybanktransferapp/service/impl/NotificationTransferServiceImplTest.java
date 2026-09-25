@@ -16,6 +16,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Интеграционные тесты сервиса уведомлений transfer-сервиса.
+ *
+ * <p>Проверяют публикацию уведомлений в Kafka-топик переводов.</p>
+ */
 @SpringBootTest
 @EmbeddedKafka(topics = {"transfer"})
 class NotificationTransferServiceImplTest {
@@ -26,6 +31,9 @@ class NotificationTransferServiceImplTest {
     @Autowired
     private NotificationTransferService notificationTransferService;
 
+    /**
+     * Проверяет отправку уведомления в Kafka-топик переводов.
+     */
     @Test
     void sendNotification() {
         try (var consumerForTest = new DefaultKafkaConsumerFactory<>(

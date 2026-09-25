@@ -15,6 +15,12 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Контрактные интеграционные тесты клиента взаимодействия с аккаунт-сервисом.
+ *
+ * <p>Проверяют получение списка счетов и данных счёта через gateway,
+ * используя WireMock-стабы Spring Cloud Contract.</p>
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("contract-test")
 @AutoConfigureStubRunner(
@@ -29,6 +35,9 @@ class TransferClientTest {
     private String gatewayBaseUrl;
 
 
+    /**
+     * Проверяет получение списка счетов через клиент.
+     */
     @Test
     void findAllAccounts() {
         transferClient = new TransferClient(WebClient.builder()
@@ -40,6 +49,9 @@ class TransferClientTest {
         assertEquals(new AccountShortResponse("testUser1", "testUser1"), dto);
     }
 
+    /**
+     * Проверяет получение счёта текущего пользователя или его создание.
+     */
     @Test
     void getAccount() {
         transferClient = new TransferClient(WebClient.builder()
