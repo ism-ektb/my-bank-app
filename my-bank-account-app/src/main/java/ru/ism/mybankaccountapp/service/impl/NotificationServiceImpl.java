@@ -10,6 +10,9 @@ import ru.ism.mybankdto.module.Notification;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Реализация отправки уведомлений аккаунт-сервиса через Kafka.
+ */
 @Service
 @Slf4j
 public class NotificationServiceImpl implements NotificationService {

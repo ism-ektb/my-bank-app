@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reactor.core.publisher.Mono;
 import ru.ism.mybankdto.exception.NoFoundException;
 
+/**
+ * Обрабатывает исключения, возникающие при выполнении REST-запросов аккаунт-сервиса.
+ *
+ * <p>Преобразует ошибки поиска и отказа в доступе в соответствующие
+ * HTTP-ответы.</p>
+ */
 @RestControllerAdvice
 public class ExceptionControllerHandler {
 

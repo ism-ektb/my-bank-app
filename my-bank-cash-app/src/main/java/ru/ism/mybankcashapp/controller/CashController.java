@@ -12,6 +12,9 @@ import reactor.core.publisher.Mono;
 import ru.ism.mybankcashapp.service.CashService;
 import ru.ism.mybankdto.module.ActionDto;
 
+/**
+ * REST-контроллер операций пополнения и списания средств.
+ */
 @RestController
 @RequestMapping("/cash")
 @RequiredArgsConstructor

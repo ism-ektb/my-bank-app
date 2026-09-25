@@ -6,6 +6,12 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
 import ru.ism.mybankaccountapp.model.Account;
 
+/**
+ * Реактивный репозиторий для работы с банковскими счетами.
+ *
+ * <p>Предоставляет стандартные операции доступа к данным и запросы для
+ * поиска счетов, пополнения и списания средств.</p>
+ */
 public interface AccountRepository extends ReactiveCrudRepository<Account, Long> {
     Mono<Account> findByLogin(String accountNumber);
 

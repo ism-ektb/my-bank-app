@@ -15,6 +15,9 @@ import reactor.core.publisher.Mono;
 import ru.ism.mybankdto.module.TransferRequest;
 import ru.ism.mybanktransferapp.service.TransferService;
 
+/**
+ * REST-контроллер денежных переводов между счетами.
+ */
 @RestController
 @RequestMapping("/transfer")
 @RequiredArgsConstructor

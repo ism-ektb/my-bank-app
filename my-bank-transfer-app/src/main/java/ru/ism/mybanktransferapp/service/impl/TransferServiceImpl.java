@@ -13,6 +13,12 @@ import ru.ism.mybankdto.module.*;
 import ru.ism.mybanktransferapp.service.NotificationTransferService;
 import ru.ism.mybanktransferapp.service.TransferService;
 
+/**
+ * Реализует проверку баланса и выполнение переводов через аккаунт-сервис.
+ *
+ * <p>Сервис взаимодействует с аккаунт-сервисом по HTTP, регистрирует ошибки
+ * в метриках и отправляет уведомления об успешных переводах.</p>
+ */
 @Service
 public class TransferServiceImpl implements TransferService {
 

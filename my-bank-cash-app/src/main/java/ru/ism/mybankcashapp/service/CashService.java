@@ -4,6 +4,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import reactor.core.publisher.Mono;
 import ru.ism.mybankdto.module.ActionDto;
 
+/**
+ * Определяет операции работы с наличными средствами клиента.
+ */
 public interface CashService {
 
     Mono<Void> cash(ActionDto actionDto, JwtAuthenticationToken authenticationToken);

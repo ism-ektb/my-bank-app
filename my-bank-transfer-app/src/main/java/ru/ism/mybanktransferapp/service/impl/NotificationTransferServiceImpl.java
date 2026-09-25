@@ -9,6 +9,10 @@ import ru.ism.mybankdto.module.Notification;
 import ru.ism.mybanktransferapp.service.NotificationTransferService;
 
 import java.util.concurrent.CompletableFuture;
+
+/**
+ * Реализация отправки уведомлений transfer-сервиса через Kafka.
+ */
 @Service
 @Slf4j
 public class NotificationTransferServiceImpl implements NotificationTransferService {

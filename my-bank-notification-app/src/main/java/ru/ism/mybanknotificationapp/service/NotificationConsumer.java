@@ -10,6 +10,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+/**
+ * Kafka-потребитель уведомлений банковских микросервисов.
+ *
+ * <p>Получает сообщения об операциях со счетами, переводах и наличных
+ * средствах и записывает их в журнал приложения.</p>
+ */
 @Service
 public class NotificationConsumer {
 

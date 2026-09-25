@@ -5,6 +5,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.mybankdto.module.*;
 
+/**
+ * Определяет операции управления банковскими счетами.
+ *
+ * <p>Сервис поддерживает работу с профилем клиента, балансом, переводами
+ * и поиском доступных счетов.</p>
+ */
 public interface AccountService {
 
     Mono<AccountResponseDto> updateAccount(AccountRequestDto accountRequestDto, JwtAuthenticationToken authentication);

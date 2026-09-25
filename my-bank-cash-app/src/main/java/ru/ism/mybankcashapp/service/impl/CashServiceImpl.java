@@ -20,6 +20,12 @@ import ru.ism.mybankdto.module.Notification;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Реализует операции с наличными средствами через аккаунт-сервис.
+ *
+ * <p>После выполнения операции сервис отправляет уведомление и регистрирует
+ * метрики ошибок внешнего взаимодействия.</p>
+ */
 @Service
 public class CashServiceImpl implements CashService {
 

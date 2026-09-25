@@ -10,6 +10,9 @@ import ru.ism.mybankdto.module.Notification;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Реализация отправки уведомлений cash-сервиса через Kafka.
+ */
 @Service
 @Slf4j
 public class NotificationCashServiceImpl implements NotificationCashService {
@@ -31,4 +34,3 @@ public class NotificationCashServiceImpl implements NotificationCashService {
         return Mono.empty();
     }
 }
-
