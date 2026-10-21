@@ -88,7 +88,7 @@ class TransferServiceImplTest {
                 .setBody("{\"login\": \"testUser\", \"balance\": 1}"));
         mockAccount.enqueue(new MockResponse().setResponseCode(200));
         when(notificationTransferService.sendNotification(any())).thenReturn(Mono.empty());
-        when(meterRegistry.counter(anyString(), anyString(), anyString())).thenReturn(Mockito.mock(Counter.class));
+        when(meterRegistry.counter(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(Mockito.mock(Counter.class));
         Jwt jwt = Jwt.withTokenValue("testToken")
                 .header("alg", "HS256")
                 .claim("preferred_username", "testUser")
@@ -96,7 +96,7 @@ class TransferServiceImplTest {
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         assertThrows(ValidationException.class, () -> transferService.transfer(
                 new TransferRequest("user", 10L), token).block());
-        verify(meterRegistry).counter(anyString(), anyString(), anyString());
+        verify(meterRegistry).counter(anyString(), anyString(), anyString(), anyString(), anyString());
     }
 
     /**
@@ -110,6 +110,7 @@ class TransferServiceImplTest {
                 .setBody("{\"login\": \"testUser\", \"balance\": 100}"));
         mockAccount.enqueue(new MockResponse().setResponseCode(400));
         when(notificationTransferService.sendNotification(any())).thenReturn(Mono.empty());
+        when(meterRegistry.counter(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(Mockito.mock(Counter.class));
 
         Jwt jwt = Jwt.withTokenValue("testToken")
                 .header("alg", "HS256")
@@ -118,6 +119,5 @@ class TransferServiceImplTest {
         JwtAuthenticationToken token = new JwtAuthenticationToken(jwt);
         assertThrows(Exception.class, () -> transferService.transfer(
                 new TransferRequest("user", 10L), token).block());
-        verify(meterRegistry).counter(anyString(), anyString(), anyString());
-    }
+        verify(meterRegistry).counter(anyString(), anyString(), anyString(), anyString(),  anyString());  }
 }
