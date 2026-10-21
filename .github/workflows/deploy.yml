@@ -34,7 +34,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Gradle project
-        run: bash ./gradlew build --no-daemon
+        run: >-
+          bash ./gradlew build
+          :my-bank-account-app:bootJar
+          :my-bank-cash-app:bootJar
+          :my-bank-transfer-app:bootJar
+          :my-bank-front-app:bootJar
+          :my-bank-gateway:bootJar
+          :my-bank-notification-app:bootJar
+          :my-bank-liquibase:bootJar
+          --no-daemon
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
