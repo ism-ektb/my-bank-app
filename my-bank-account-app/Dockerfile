@@ -1,6 +1,5 @@
 FROM gradle:8.10.2-jdk21 AS build
 WORKDIR /src
-
 COPY . .
 RUN chmod +x ./gradlew && ./gradlew :my-bank-account-app:bootJar --no-daemon
 
