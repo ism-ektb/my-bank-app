@@ -63,7 +63,7 @@
 9. Находясь в директории 'my-bank-app', выполнить команду 'helm dependency build account-chart/' (возможно придется включить VPN)
 10. Запустить проект командой 'helm install account-chart account-chart/' 
 11. Для подключения к Grafana необходимо открыть порт командой 'kubectl port-forward service/account-chart-grafana-app 3000:80' 
-12. Для входа в Grafana введите login - admin и пароль - admin
+12. Для входа в Grafana используйте логин и пароль из Secret `bank-app-secrets` (`grafana-admin-user` и `grafana-admin-password`).
 13. Dashboard Grafana находится в папке grafana корневой директории проекта. Ее надо импортировать самостоятельно.
 14. **Ввиду особенностей лицензирования Elasticsearch его надо запустить в отдельном контейнере. Для этого надо зайти в папку "/elk" и запустить docker-compose**
 ## Терминал немного зависнет (у меня на пару минут). Он будет ждать пока контейнер с liquibase выполнит свою работу.
@@ -86,4 +86,24 @@
 Дополнения:
  - Keycloak работает со встроенной базой H2, поэтому после перезагрузки проекта учетные данные пропадают.
  - Helm-чарты для микросервисов оформлены в виде сабчартов, объединённых под один общий зонтичный Helm-чарт. Настройки чартов вынесены в зонтичный values.yaml
+
+## Kubernetes Secrets для паролей
+
+Перед установкой создайте Secret `bank-app-secrets` в том же namespace, куда устанавливается Helm-релиз. В нём должны быть ключи:
+
+- `postgres-password` — пароль администратора PostgreSQL;
+- `database-password` — пароль пользователя приложения `user1` в PostgreSQL;
+- `account-client-secret`, `cash-client-secret`, `transfer-client-secret` — секреты OAuth-клиентов;
+- `keycloak-admin-password` — пароль администратора Keycloak;
+- `grafana-admin-user`, `grafana-admin-password` — логин и пароль Grafana.
+
+Для локального запуска в namespace `default` создайте Secret из локального env-файла, содержащего эти пары `ключ=значение`. Не добавляйте этот файл в репозиторий:
+
+```powershell
+kubectl create secret generic bank-app-secrets --from-env-file=bank-secrets.env
+kubectl create secret generic realm-secret --from-file=realm-export.json
+helm upgrade --install account-chart .\account-chart
+```
+
+Для облачного namespace, например `bank`, сначала создайте namespace, затем создайте оба Secret с параметром `--namespace bank` и установите чарт с `--namespace bank`. Значения Secret должны соответствовать паролям/секретам, настроенным в PostgreSQL и Keycloak. Если PostgreSQL уже использует существующий persistent volume, смена Secret сама по себе не меняет пароль в базе.
  

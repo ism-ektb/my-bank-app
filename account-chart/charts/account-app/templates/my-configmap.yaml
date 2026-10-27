@@ -5,8 +5,6 @@ metadata:
 data:
   DATABASE_URL: {{ tpl .Values.database.url . | quote}}
   DATABASE_USERNAME: {{ .Values.database.username | quote}}
-  DATABASE_PASSWORD: {{ .Values.database.password | quote}}
   KEYCLOAK.URL: {{ tpl .Values.service_url.keycloak_url . | quote}}
-  ACCOUNT.SECRET: {{ .Values.account_secret | quote}}
   KAFKA.URL: {{ tpl .Values.service_url.kafka_url . | quote}}
   ZIPKIN.URL: {{ tpl .Values.service_url.zipkin_url . | quote}}

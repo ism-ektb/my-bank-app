@@ -5,6 +5,7 @@ bank:
   gateway:
     base-url: "${GATEWAY.HOST:http://localhost:8081}"
   keycloak-url: "${KEYCLOAK.URL:http://localhost:8080/realms/bank-realm}"
+  keycloak-out-url: "${KEYCLOAK.OUT.URL:http://localhost:80/auth/realms/bank-realm}"
 
 logging:
   level:
@@ -25,7 +26,7 @@ spring:
         provider:
           keycloak:
             user-name-attribute: preferred_username
-            authorization-uri: "http://localhost:80/auth/realms/bank-realm/protocol/openid-connect/auth"
+            authorization-uri: "${bank.keycloak-out-url}/protocol/openid-connect/auth"
             token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
             user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
             jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"

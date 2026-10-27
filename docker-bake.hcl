@@ -28,7 +28,7 @@ target "transfer" {
 target "front" {
   context = "."
   dockerfile = "./my-bank-front-app/Dockerfile"
-  tags = ["${IMAGE_PREFIX}/my-bank-front:1.3.1"]
+  tags = ["${IMAGE_PREFIX}/my-bank-front:1.3.2"]
 }
 
 target "gateway" {

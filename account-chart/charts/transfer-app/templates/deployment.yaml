@@ -44,6 +44,12 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          env:
+            - name: TRANSFER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "global.appSecrets.name is required" .Values.global.appSecrets.name }}
+                  key: {{ .Values.global.appSecrets.keys.transferClientSecret }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

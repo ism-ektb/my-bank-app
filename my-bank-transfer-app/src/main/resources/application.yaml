@@ -14,7 +14,7 @@ spring:
           transfer-app:
             provider: keycloak
             client-id: transfer-app
-            client-secret: ${TRANSFER.SECRET}
+            client-secret: ${TRANSFER_SECRET}
             authorization-grant-type: client_credentials
         provider:
           keycloak:

@@ -14,15 +14,8 @@ spring:
           cash-app:
             provider: keycloak
             client-id: cash-app
-            client-secret: ${CASH.SECRET}
+            client-secret: ${CASH_SECRET}
             authorization-grant-type: client_credentials
-        provider:
-          keycloak:
-            user-name-attribute: preferred_username
-            authorization-uri: "http://localhost:80/auth/realms/bank-realm/protocol/openid-connect/auth"
-            token-uri: "${bank.keycloak-url}/protocol/openid-connect/token"
-            user-info-uri: "${bank.keycloak-url}/protocol/openid-connect/userinfo"
-            jwk-set-uri: "${bank.keycloak-url}/protocol/openid-connect/certs"
   kafka:
     bootstrap-servers: ${KAFKA.URL:kafka-broker-0.kafka-headless.default.svc.cluster.local:9092}
     producer:
@@ -57,5 +50,4 @@ bank:
 logging:
   level:
     root: INFO
-
 

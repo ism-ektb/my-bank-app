@@ -5,4 +5,3 @@ metadata:
 data:
   DATABASE_URL: {{ tpl .Values.hooks.myHook.url . | quote}}
   DATABASE_USERNAME: {{ .Values.hooks.myHook.username | quote}}
-  DATABASE_PASSWORD: {{ .Values.hooks.myHook.password | quote}}

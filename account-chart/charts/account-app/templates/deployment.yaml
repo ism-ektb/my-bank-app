@@ -44,6 +44,17 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "global.appSecrets.name is required" .Values.global.appSecrets.name }}
+                  key: {{ .Values.global.appSecrets.keys.databasePassword }}
+            - name: ACCOUNT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "global.appSecrets.name is required" .Values.global.appSecrets.name }}
+                  key: {{ .Values.global.appSecrets.keys.accountClientSecret }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
