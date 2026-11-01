@@ -42,7 +42,7 @@ import java.time.format.DateTimeFormatter;
 public class MainController {
 
     Logger log = LoggerFactory.getLogger(MainController.class);
-    @Value("${bank.keycloak-url}")
+    @Value("${bank.keycloak-out-url}")
     private String keycloakUrl;
     @Autowired
     private TransferClient transferClient;
