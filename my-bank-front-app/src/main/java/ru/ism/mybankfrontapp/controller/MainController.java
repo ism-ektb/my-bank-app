@@ -51,7 +51,7 @@ public class MainController {
     public Mono<String> logout(OAuth2AuthenticationToken token) {
         log.info("Logout called login: - {}", token.getPrincipal().getName());
         String id = ((OidcUser) token.getPrincipal()).getIdToken().getTokenValue();
-        return Mono.empty().thenReturn("redirect:" + keycloakUrl  + "/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A8084%2Flogout&id_token_hint=" + id);
+        return Mono.empty().thenReturn("redirect:" + keycloakUrl  + "/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2F217.147.13.198%2Flogout&id_token_hint=" + id);
     }
 
     /**
