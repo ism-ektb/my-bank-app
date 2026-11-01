@@ -3,6 +3,7 @@ package ru.ism.mybankfrontapp.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
@@ -41,7 +42,8 @@ import java.time.format.DateTimeFormatter;
 public class MainController {
 
     Logger log = LoggerFactory.getLogger(MainController.class);
-
+    @Value("${service_url.keycloak_url}")
+    private String keycloakUrl;
     @Autowired
     private TransferClient transferClient;
 
@@ -49,7 +51,7 @@ public class MainController {
     public Mono<String> logout(OAuth2AuthenticationToken token) {
         log.info("Logout called login: - {}", token.getPrincipal().getName());
         String id = ((OidcUser) token.getPrincipal()).getIdToken().getTokenValue();
-        return Mono.empty().thenReturn("redirect:http://localhost/auth/realms/bank-realm/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A8084%2Flogout&id_token_hint=" + id);
+        return Mono.empty().thenReturn("redirect:" + keycloakUrl  + "/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A8084%2Flogout&id_token_hint=" + id);
     }
 
     /**
