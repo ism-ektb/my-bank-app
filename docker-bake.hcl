@@ -16,19 +16,19 @@ target "account" {
 target "cash" {
   context = "."
   dockerfile = "./my-bank-cash-app/Dockerfile"
-  tags = ["${IMAGE_PREFIX}/my-bank-cash:1.3.1"]
+  tags = ["${IMAGE_PREFIX}/my-bank-cash:1.3.2"]
 }
 
 target "transfer" {
   context = "."
   dockerfile = "./my-bank-transfer-app/Dockerfile"
-  tags = ["${IMAGE_PREFIX}/my-bank-transfer:1.3.1"]
+  tags = ["${IMAGE_PREFIX}/my-bank-transfer:1.3.2"]
 }
 
 target "front" {
   context = "."
   dockerfile = "./my-bank-front-app/Dockerfile"
-  tags = ["${IMAGE_PREFIX}/my-bank-front:1.3.2"]
+  tags = ["${IMAGE_PREFIX}/my-bank-front:1.3.3"]
 }
 
 target "gateway" {
