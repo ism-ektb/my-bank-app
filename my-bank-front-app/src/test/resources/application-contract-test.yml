@@ -1,7 +1,0 @@
-bank:
-  gateway:
-    base-url: http://localhost:8081
-
-spring:
-  main:
-    allow-bean-definition-overriding: true

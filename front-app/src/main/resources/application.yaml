@@ -1,0 +1,31 @@
+server:
+  port: 8085
+
+app:
+  account:
+    base-url: http://localhost:8081
+
+spring:
+  application:
+    name: front-app
+  security:
+    oauth2:
+      client:
+        registration:
+          auth-server:
+            client-id: "my-front"
+            client-secret: "my-secret"
+            authorization-grant-type: client_credentials
+            client-authentication-method: client_secret_basic
+            scope:
+              - read
+              - write
+
+        provider:
+            auth-server:
+                issuer-uri: http://localhost:9000
+                jwk-set-uri: http://localhost:9000/oauth2/token
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web.reactive.function.client.WebClient: TRACE
