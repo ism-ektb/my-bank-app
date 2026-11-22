@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.reactive.result.view.Rendering;
 import reactor.core.publisher.Mono;
 import ru.ism.frontapp.client.AccountClient;
+import ru.ism.frontapp.client.AuthClient;
 import ru.ism.frontapp.web.RegisterForm;
 
 import java.net.URLEncoder;
@@ -19,10 +20,10 @@ import java.nio.charset.StandardCharsets;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final AccountClient accountClient;
+    private final AuthClient authClient;
 
-    public AuthController(AccountClient accountClient) {
-        this.accountClient = accountClient;
+    public AuthController(AuthClient authClient) {
+        this.authClient = authClient;
     }
 
     @GetMapping("/register")
@@ -47,16 +48,16 @@ public class AuthController {
             );
         }
 
-        return accountClient.register(form)
+        return authClient.register(form)
                 .thenReturn(
                         Rendering.redirectTo("/auth/login?success=" +
-                                URLEncoder.encode("Регистрация успешна", StandardCharsets.UTF_8))
+                                        URLEncoder.encode("Регистрация успешна", StandardCharsets.UTF_8))
                                 .build()
                 )
                 .onErrorResume(ex ->
                         Mono.just(
                                 Rendering.redirectTo("/auth/register?error=" +
-                                        URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8))
+                                                URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8))
                                         .build()
                         )
                 );

@@ -17,7 +17,7 @@
 <div class="float-end">
     <form th:action="@{/logout}" method="post">
         <input type="submit" value="Log out"/>
-        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
     </form>
 </div>
 <div class="container p-2">

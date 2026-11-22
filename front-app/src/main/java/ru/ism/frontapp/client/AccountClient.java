@@ -25,31 +25,11 @@ public class AccountClient {
 
     private final WebClient webClient;
 
-    public AccountClient(WebClient webClient) {
-        this.webClient = webClient.mutate()
-                .baseUrl("http://localhost:8081") // URL сервиса аккаунтов
+    public AccountClient(WebClient userWebClient) {
+        this.webClient = userWebClient.mutate()
+                .baseUrl("http://localhost:8081")
                 .build();
-    }
-
-    public Mono<UserResponse> register(RegisterForm form) {
-        return webClient.post()
-                .uri("/api/users")
-                .bodyValue(new RegisterRequest(
-                        form.getName(),
-                        form.getLogin(),
-                        form.getBirthDate(),
-                        form.getPassword()
-                ))
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, resp ->
-                        resp.bodyToMono(String.class)
-                                .defaultIfEmpty("Ошибка регистрации")
-                                .flatMap(msg -> Mono.error(new IllegalArgumentException(msg))))
-                .onStatus(HttpStatusCode::is5xxServerError, resp ->
-                        resp.bodyToMono(String.class)
-                                .defaultIfEmpty("Сервис аккаунтов недоступен")
-                                .flatMap(msg -> Mono.error(new IllegalStateException(msg))))
-                .bodyToMono(UserResponse.class);
+        ;
     }
 
 

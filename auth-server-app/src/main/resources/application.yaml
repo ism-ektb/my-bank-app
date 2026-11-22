@@ -4,8 +4,45 @@ server:
 spring:
   application:
     name: auth-server-app
+  security:
+    user:
+      name: user
+      password: password
+    oauth2:
+      authorizationserver:
+        client:
+          my_front:
+            registration:
+              client-id: "my_front"
+              client-secret: "$2a$10$M024XHosz.Pv089aTcLZd.M9XJFBXdO1wwOLfHCgTmybPTrGGVWlS"
+              client-authentication-methods:
+                - "client_secret_post"
+              authorization-grant-types:
+                - "authorization_code"
+                - "client_credentials"
+              redirect-uris:
+                - "http://localhost:8085/login/oauth2/code/my_front"
+
+              scopes:
+                - "openid"
+                - "write"
+                - "user"
+          auth-server-client:
+            registration:
+              client-id: "auth-server-client"
+              client-secret: "$2y$10$5uFEgnapQnCvV0HXvVmFb.54nDWN08JEyWdLC9psSoZDPU7yasMdW"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "client_credentials"
+              scopes:
+                - "server"
+
+
 logging:
   level:
-    org.springframework.security: trace
-    org.springframework.web: trace
+    org:
+      springframework:
+        security: trace
+    org.springframework.security.crypto.bcrypt: trace
 

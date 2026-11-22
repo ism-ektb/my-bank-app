@@ -10,4 +10,6 @@ public class AuthServerAppApplication {
         SpringApplication.run(AuthServerAppApplication.class, args);
     }
 
+
+
 }

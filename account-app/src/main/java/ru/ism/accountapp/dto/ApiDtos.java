@@ -1,7 +1,6 @@
 package ru.ism.accountapp.dto;
 
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import ru.ism.accountapp.domain.Account;

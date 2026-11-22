@@ -39,7 +39,7 @@ public class WebClientConfig {
     @Bean
     public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
         var oauth2Client = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
-        oauth2Client.setDefaultClientRegistrationId("auth-server");
+        oauth2Client.setDefaultClientRegistrationId("my_front");
         return WebClient.builder()
                 .filter(oauth2Client)
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))

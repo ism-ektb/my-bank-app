@@ -18,7 +18,13 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.csrf.CsrfWebFilter;
 import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.server.util.matcher.AndServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.WebSessionServerLogoutHandler;
 import reactor.core.publisher.Mono;
 import ru.ism.frontapp.client.AccountClient;
 
@@ -49,6 +55,38 @@ public class SecurityConfig {
                     }));
         };
 
+        ServerLogoutSuccessHandler logoutSuccessHandler = (exchange, authentication) -> {
+            var response = exchange.getExchange().getResponse();
+
+            response.getHeaders().add("Set-Cookie",
+                    org.springframework.http.ResponseCookie.from("SESSION", "")
+                            .path("/")
+                            .maxAge(java.time.Duration.ZERO)
+                            .httpOnly(true)
+                            .sameSite("Lax")
+                            .build()
+                            .toString());
+
+            response.getHeaders().add("Set-Cookie",
+                    org.springframework.http.ResponseCookie.from("JSESSIONID", "")
+                            .path("/")
+                            .maxAge(java.time.Duration.ZERO)
+                            .httpOnly(true)
+                            .sameSite("Lax")
+                            .build()
+                            .toString());
+
+            return exchange.getExchange().getSession()
+                    .doOnNext(session -> session.getAttributes()
+                            .put("authLogoutMessage", "Вы успешно вышли из системы"))
+                    .then(Mono.defer(() -> {
+                        response.setStatusCode(org.springframework.http.HttpStatus.SEE_OTHER);
+                        response.getHeaders().setLocation(URI.create("/"));
+                        return response.setComplete();
+                    }));
+        };
+
+
         ServerAuthenticationFailureHandler failureHandler = (webFilterExchange, exception) -> {
             var exchange = webFilterExchange.getExchange();
 
@@ -64,45 +102,34 @@ public class SecurityConfig {
                     }));
         };
 
+
+
         return http
                 .csrf(csrfSpec -> csrfSpec.csrfTokenRepository(new CookieServerCsrfTokenRepository())
-                        .csrfTokenRequestHandler(xorHandler))
+                        .csrfTokenRequestHandler(xorHandler)
+                        .requireCsrfProtectionMatcher(
+                                new AndServerWebExchangeMatcher(
+                                        // 1. Сохраняем стандартное правило (только PUT, POST, DELETE)
+                                        CsrfWebFilter.DEFAULT_CSRF_MATCHER,
+                                        // 2. Добавляем исключение для нашего пути (НЕ применять CSRF к /auth/register/**)
+                                        new NegatedServerWebExchangeMatcher(
+                                                ServerWebExchangeMatchers.pathMatchers("/auth/register/**")
+                                        )
+                                )))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/auth/register", "/auth/login", "/login", "/css/**", "/js/**", "/test/**").permitAll()
                         .anyExchange().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/auth/login")
-                        .authenticationSuccessHandler(successHandler)
-                        .authenticationFailureHandler((webFilterExchange, exception) -> {
-                            var exchange = webFilterExchange.getExchange();
-
-                            String message = "Неверный логин или пароль";
-                            String encoded = java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8);
-
-                            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.SEE_OTHER);
-                            exchange.getResponse().getHeaders().setLocation(URI.create("/auth/login?error=" + encoded));
-                            return exchange.getResponse().setComplete();
-                        })
+                .logout(logoutSpec -> logoutSpec
+                        .logoutSuccessHandler(logoutSuccessHandler)
+                        .logoutHandler(new WebSessionServerLogoutHandler())
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessHandler((exchange, authentication) -> {
-                            exchange.getExchange().getSession()
-                                    .doOnNext(session -> session.getAttributes()
-                                            .put("authLogoutMessage", "Вы успешно вышли"))
-                                    .subscribe();
-
-                            exchange.getExchange().getResponse().setStatusCode(org.springframework.http.HttpStatus.SEE_OTHER);
-                            exchange.getExchange().getResponse().getHeaders().setLocation(URI.create("/auth/login?logout=1"));
-                            return exchange.getExchange().getResponse().setComplete();
-                        })
-                )
-                .securityContextRepository(new WebSessionServerSecurityContextRepository())
+                .oauth2Login(Customizer.withDefaults())
                 .oauth2Client(Customizer.withDefaults())
+                
                 .build();
     }
-
+/*
     @Bean
     public ReactiveAuthenticationManager reactiveAuthenticationManager(
             AccountClient accountClient,
@@ -127,6 +154,8 @@ public class SecurityConfig {
         };
     }
 
+
+ */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();

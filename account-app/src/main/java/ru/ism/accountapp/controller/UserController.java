@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
@@ -25,21 +24,21 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    @PreAuthorize("hasAuthority('SCOPE_write')")
+    @PreAuthorize("hasRole('SERVER')")
     public Mono<ResponseEntity<UserResponse>> createUser(@Valid @RequestBody UserCreateRequest request) {
         return userService.create(request)
                 .map(user -> ResponseEntity.status(HttpStatus.CREATED).body(user));
     }
 
     @GetMapping("/users/login/{login}")
-    @PreAuthorize("hasAuthority('SCOPE_read')")
+    @PreAuthorize("hasRole('USER')")
     public Mono<ResponseEntity<UserResponse>> getUserByLogin(@PathVariable String login) {
         return userService.getByLogin(login)
                 .map(ResponseEntity::ok);
     }
 
     @PutMapping("/users/{login}")
-    @PreAuthorize("hasAuthority('SCOPE_write')")
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
     public Mono<ResponseEntity<UserResponse>> updateUser(
             @PathVariable String login,
             @Valid @RequestBody UserUpdateRequest request
@@ -49,7 +48,7 @@ public class UserController {
     }
 
     @GetMapping("/users/login/{login}/auth")
-    @PreAuthorize("hasAuthority('SCOPE_read')")
+    @PreAuthorize("hasRole('SERVER')")
     public Mono<ResponseEntity<UserAuthResponse>> getUserByLoginForAuth(@PathVariable String login) {
 
         return userService.getByLoginForAuth(login)

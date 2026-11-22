@@ -23,6 +23,7 @@ public class AccountController {
         this.accountService = accountService;
     }
 
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
     @PostMapping("/users/{userLogin}/accounts")
     public Mono<ResponseEntity<AccountResponse>> createAccount(
             @PathVariable String userLogin,
@@ -32,6 +33,7 @@ public class AccountController {
                 .map(account -> ResponseEntity.status(HttpStatus.CREATED).body(account));
     }
 
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
     @DeleteMapping("/users/{userLogin}/accounts/{currency}")
     public Mono<ResponseEntity<Void>> deleteAccount(
             @PathVariable String userLogin,

@@ -1,12 +1,11 @@
 package ru.ism.accountapp.service;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import ru.ism.accountapp.domain.User;
-import ru.ism.accountapp.dto.ApiDtos;
 import ru.ism.accountapp.dto.ApiDtos.UserCreateRequest;
 import ru.ism.accountapp.dto.ApiDtos.UserResponse;
 import ru.ism.accountapp.dto.ApiDtos.UserUpdateRequest;
@@ -50,7 +49,7 @@ public class UserService {
                         request.name() != null ? request.name() : existing.name(),
                         existing.login(),
                         request.birthDate() != null ? request.birthDate() : existing.birthDate(),
-                        request.password() != null ? request.password() : existing.password(),
+                        request.password() == null || request.password().isEmpty() ? existing.password() : new BCryptPasswordEncoder().encode(request.password()),
                         existing.createdAt(),
                         LocalDateTime.now()
                 )).map(UserResponse::from));
