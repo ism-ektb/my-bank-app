@@ -1,19 +1,14 @@
 package ru.ism.authserverapp.client;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 import ru.ism.authserverapp.web.RegisterForm;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
 
 @Component
 public class AccountClient {
@@ -41,8 +36,8 @@ public class AccountClient {
 
     }
 
-    public AccountClient.UserResponse register(RegisterForm form) {
-        return restClient.post()
+    public void register(RegisterForm form) {
+        restClient.post()
                 .uri("/api/users")
                 .body(new RegisterRequest(
                         form.getName(),
@@ -61,7 +56,7 @@ public class AccountClient {
                     if (msg.isBlank()) msg = "Сервис аккаунтов недоступен";
                     throw new IllegalStateException(msg);
                 })
-                .body(AccountClient.UserResponse.class);
+                .body(UserResponse.class);
     }
 
     public record UserDto(Long id,
@@ -72,7 +67,7 @@ public class AccountClient {
         public static UserDetails from(UserDto dto) {
             return User.withUsername(dto.login)
                     .password(dto.password())
-                    .roles("User").build();
+                    .roles("USER").build();
         }
     }
 

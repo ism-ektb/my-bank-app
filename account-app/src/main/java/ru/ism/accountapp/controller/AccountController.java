@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,28 +25,29 @@ public class AccountController {
     }
 
     @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
-    @PostMapping("/users/{userLogin}/accounts")
+    @PostMapping("/users/accounts")
     public Mono<ResponseEntity<AccountResponse>> createAccount(
-            @PathVariable String userLogin,
-            @Valid @RequestBody AccountCreateRequest request
+            @Valid @RequestBody AccountCreateRequest request,
+            Authentication authentication
     ) {
-        return accountService.createForUser(userLogin, request)
+        return accountService.createForUser(authentication.getName(), request)
                 .map(account -> ResponseEntity.status(HttpStatus.CREATED).body(account));
     }
 
     @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
-    @DeleteMapping("/users/{userLogin}/accounts/{currency}")
+    @DeleteMapping("/users/accounts/{currency}")
     public Mono<ResponseEntity<Void>> deleteAccount(
-            @PathVariable String userLogin,
-            @PathVariable Currency currency
+            @PathVariable Currency currency,
+            Authentication authentication
     ) {
-        return accountService.deleteForUser(userLogin, currency)
+        return accountService.deleteForUser(authentication.getName(), currency)
                 .map(ResponseEntity::ok);
     }
 
-    @GetMapping("/users/{userLogin}/accounts")
-    public Flux<AccountResponse> getUserAccounts(@PathVariable String userLogin) {
-        return accountService.findByUserLogin(userLogin);
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/users/accounts")
+    public Flux<AccountResponse> getUserAccounts(Authentication authentication) {
+        return accountService.findByUserLogin(authentication.getName());
     }
 
     @GetMapping("/accounts/{id}")

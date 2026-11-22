@@ -1,10 +1,6 @@
 server:
   port: 8085
 
-app:
-  account:
-    base-url: http://localhost:8081
-
 spring:
   application:
     name: front-app
@@ -25,8 +21,6 @@ spring:
         provider:
           my_front:
             issuer-uri: http://localhost:9000
-
-
 
 logging:
   level:

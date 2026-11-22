@@ -9,7 +9,4 @@ public class AuthServerAppApplication {
     public static void main(String[] args) {
         SpringApplication.run(AuthServerAppApplication.class, args);
     }
-
-
-
 }

@@ -30,8 +30,6 @@ public class AuthClientConfig {
         return new InMemoryClientRegistrationRepository(client);
     }
 
-
-
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
             ClientRegistrationRepository clientRegistrationRepository,

@@ -1,9 +1,7 @@
 package ru.ism.frontapp.controller;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,9 +29,9 @@ public class MainController {
 
     @GetMapping("/account")
     public Mono<String> home(Model model, @RequestParam(required = false, name = "error", defaultValue = "") String error,
-                             @RequestParam(required = false, value = "info", defaultValue = "") String info, Authentication authentication) {
-        return accountClient.findByLogin(authentication.getName())
-                .flatMap(user -> accountClient.getUserAccounts(authentication.getName())
+                             @RequestParam(required = false, value = "info", defaultValue = "") String info) {
+        return accountClient.findByLogin()
+                .flatMap(user -> accountClient.getUserAccounts()
                         .collectList()
                         .map(accounts -> {
                             model.addAttribute("accounts", accounts);
@@ -53,10 +51,10 @@ public class MainController {
     }
 
     @PostMapping("/account")
-    public Mono<String> editAccount(ServerWebExchange exchange, Authentication authentication) {
+    public Mono<String> editAccount(ServerWebExchange exchange) {
         return exchange.getFormData()
                 .flatMap(formData ->
-                        accountClient.updateUser(authentication.getName(), new AccountClient.UserUpdateRequest(
+                        accountClient.updateUser(new AccountClient.UserUpdateRequest(
                                 formData.getFirst("name"),
                                 formData.getFirst("birthdate") != null ? LocalDate.parse(formData.getFirst("birthdate")) : null,
                                 formData.getFirst("password")
@@ -67,10 +65,10 @@ public class MainController {
     }
 
     @PostMapping("/account/create")
-    public Mono<String> createAccount(ServerWebExchange exchange, Authentication authentication) {
+    public Mono<String> createAccount(ServerWebExchange exchange) {
         return exchange.getFormData()
                 .flatMap(formData ->
-                        accountClient.createAccount(authentication.getName(), new AccountClient.AccountCreateRequest(
+                        accountClient.createAccount(new AccountClient.AccountCreateRequest(
                                 Currency.valueOf(formData.getFirst("currency")),
                                 new BigDecimal("0.00")
                         )))
@@ -80,10 +78,10 @@ public class MainController {
     }
 
     @PostMapping("/account/delete")
-    public Mono<String> deleteAccount(ServerWebExchange exchange, Authentication authentication) {
+    public Mono<String> deleteAccount(ServerWebExchange exchange) {
         return exchange.getFormData()
                 .flatMap(formData ->
-                    accountClient.deleteAccount(authentication.getName(), Currency.valueOf(formData.getFirst("currency_")))
+                        accountClient.deleteAccount(Currency.valueOf(formData.getFirst("currency_")))
                 )
                 .thenReturn("redirect:/account?info=ok")
                 .doOnError(Throwable::printStackTrace)

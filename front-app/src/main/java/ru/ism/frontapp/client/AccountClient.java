@@ -3,17 +3,14 @@ package ru.ism.frontapp.client;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.frontapp.domain.Currency;
-import ru.ism.frontapp.dto.RegisterRequest;
-import ru.ism.frontapp.dto.AuthResponse;
-import ru.ism.frontapp.web.RegisterForm;
+import ru.ism.frontapp.validation.MinAge;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,29 +26,18 @@ public class AccountClient {
         this.webClient = userWebClient.mutate()
                 .baseUrl("http://localhost:8081")
                 .build();
-        ;
     }
 
-
-    public Mono<UserAuthResponse> findByLoginForAuth(String login) {
+    public Mono<UserResponse> findByLogin() {
         return webClient.get()
-                .uri("/api/users/login/{login}/auth", login)
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        Mono.error(new IllegalArgumentException("User not found")))
-                .bodyToMono(UserAuthResponse.class);
-    }
-
-    public Mono<UserResponse> findByLogin(String login) {
-        return webClient.get()
-                .uri("/api/users/login/{login}", login)
+                .uri("/api/users/login")
                 .retrieve()
                 .bodyToMono(UserResponse.class);
     }
 
-    public Mono<UserResponse> updateUser(String login, UserUpdateRequest request) {
+    public Mono<UserResponse> updateUser(UserUpdateRequest request) {
         return webClient.put()
-                .uri("/api/users/{login}", login)
+                .uri("/api/users")
                 .bodyValue(request)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, resp ->
@@ -65,9 +51,9 @@ public class AccountClient {
                 .bodyToMono(UserResponse.class);
     }
 
-    public Mono<AccountResponse> createAccount(String userLogin, AccountCreateRequest request) {
+    public Mono<AccountResponse> createAccount(AccountCreateRequest request) {
         return webClient.post()
-                .uri("/api/users/{userLogin}/accounts", userLogin)
+                .uri("/api/users/accounts")
                 .bodyValue(request)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, resp ->
@@ -81,9 +67,9 @@ public class AccountClient {
                 .bodyToMono(AccountResponse.class);
     }
 
-    public Mono<Void> deleteAccount(String userLogin, Currency currency) {
+    public Mono<Void> deleteAccount(Currency currency) {
         return webClient.delete()
-                .uri("/api/users/{userLogin}/accounts/{currency}", userLogin, currency)
+                .uri("/api/users/accounts/{currency}", currency)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, resp ->
                         resp.bodyToMono(String.class)
@@ -96,9 +82,10 @@ public class AccountClient {
                 .bodyToMono(Void.class);
     }
 
-    public Flux<AccountResponse> getUserAccounts(String userLogin) {
+    @PreAuthorize("hasRole('USER')")
+    public Flux<AccountResponse> getUserAccounts() {
         return webClient.get()
-                .uri("/api/users/{userLogin}/accounts", userLogin)
+                .uri("/api/users/accounts")
                 .retrieve()
                 .bodyToFlux(AccountResponse.class);
     }
@@ -111,18 +98,9 @@ public class AccountClient {
     ) {
     }
 
-    public record UserAuthResponse(
-            Long id,
-            String name,
-            String login,
-            LocalDate birthDate,
-            String password
-    ) {
-    }
-
     public record UserUpdateRequest(
             String name,
-            LocalDate birthDate,
+            @MinAge(18) LocalDate birthDate,
             String password
     ) {
     }

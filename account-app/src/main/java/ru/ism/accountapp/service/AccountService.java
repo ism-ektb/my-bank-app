@@ -67,8 +67,7 @@ public class AccountService {
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
                         .filter(account -> account.balance().compareTo(BigDecimal.ZERO) == 0)
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account balance must be zero to delete")))
-                        .flatMap(account -> accountRepository.delete(account))
-                        .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"))));
+                        .flatMap(accountRepository::delete));
     }
 
     public Flux<AccountResponse> findByUserLogin(String userLogin) {

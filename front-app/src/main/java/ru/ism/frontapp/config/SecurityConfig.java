@@ -2,21 +2,14 @@ package ru.ism.frontapp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.server.WebFilterExchange;
 import org.springframework.security.web.server.authentication.ServerAuthenticationFailureHandler;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfWebFilter;
 import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
@@ -26,10 +19,8 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.WebSessionServerLogoutHandler;
 import reactor.core.publisher.Mono;
-import ru.ism.frontapp.client.AccountClient;
 
 import java.net.URI;
-import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -129,33 +120,7 @@ public class SecurityConfig {
                 
                 .build();
     }
-/*
-    @Bean
-    public ReactiveAuthenticationManager reactiveAuthenticationManager(
-            AccountClient accountClient,
-            PasswordEncoder passwordEncoder
-    ) {
-        return authentication -> {
-            String email = authentication.getName();
-            String rawPassword = authentication.getCredentials().toString();
 
-            return accountClient.findByLoginForAuth(email)
-                    .switchIfEmpty(Mono.error(new IllegalArgumentException("Пользователь не найден")))
-                    .flatMap(user -> {
-                        if (passwordEncoder.matches(rawPassword, user.password())) {
-                            return Mono.just(new UsernamePasswordAuthenticationToken(
-                                    user.login(),
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                            ));
-                        }
-                        return Mono.error(new BadCredentialsException("Неверный пароль"));
-                    });
-        };
-    }
-
-
- */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();

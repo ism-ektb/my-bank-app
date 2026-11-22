@@ -46,13 +46,9 @@ public class AuthController {
             authClient.register(form);
         } catch (RuntimeException e) {
             return "redirect:/auth/register?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
-
         }
-
-        // ... сохранение пользователя
         return "redirect:/auth/login?success=" + URLEncoder.encode("Регистрация успешна", StandardCharsets.UTF_8);
     }
-
 
     @GetMapping("/login")
     public String loginPage() {
