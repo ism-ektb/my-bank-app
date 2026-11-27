@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.accountapp.domain.User;
 import ru.ism.accountapp.dto.ApiDtos.UserCreateRequest;
@@ -55,9 +56,10 @@ public class UserService {
                 )).map(UserResponse::from));
     }
 
-    public Mono<User> getById(Long userId) {
-        return userRepository.findById(userId)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")));
+    public Flux<UserResponse> getUsersByLogin(String login) {
+        return userRepository.findAll()
+                .filter(user -> !login.equals(user.login()))
+                .map(UserResponse::from);
     }
 
     public Mono<UserResponse> getByLogin(String login) {

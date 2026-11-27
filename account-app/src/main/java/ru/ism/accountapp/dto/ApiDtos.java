@@ -1,8 +1,6 @@
 package ru.ism.accountapp.dto;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import ru.ism.accountapp.domain.Account;
 import ru.ism.accountapp.domain.Currency;
 import ru.ism.accountapp.domain.User;
@@ -33,7 +31,6 @@ public class ApiDtos {
             String name,
             String login,
             LocalDate birthDate,
-            String password,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -43,7 +40,6 @@ public class ApiDtos {
                     user.name(),
                     user.login(),
                     user.birthDate(),
-                    user.password(),
                     user.createdAt(),
                     user.updatedAt()
             );
@@ -79,7 +75,8 @@ public class ApiDtos {
     }
 
     public record BalanceChangeRequest(
-            @NotNull BigDecimal delta
+            @NotNull BigDecimal delta,
+            @NotNull Currency currency
     ) {
     }
 
@@ -99,4 +96,19 @@ public class ApiDtos {
             );
         }
     }
+
+    public record ConvertRequest(
+            @NotNull Currency toCurrency,
+            @NotNull Currency fromCurrency,
+            @NotNull BigDecimal toSum,
+            @NotNull BigDecimal fromSum
+    ) {
+
+    }
+
+    public record TransferRequest(
+            @NotNull String toLogin,
+            @NotNull Currency currency,
+            @NotNull @Positive BigDecimal sum
+    ){}
 }

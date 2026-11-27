@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: notification-app
+
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
+
+
+logging:
+  level:
+    org.springframework.security: trace
+    org.springframework.web: trace
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+server:
+  port: 8087

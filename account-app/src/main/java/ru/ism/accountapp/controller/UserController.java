@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.accountapp.dto.ApiDtos.UserCreateRequest;
 import ru.ism.accountapp.dto.ApiDtos.UserResponse;
@@ -29,6 +30,12 @@ public class UserController {
     public Mono<ResponseEntity<UserResponse>> createUser(@Valid @RequestBody UserCreateRequest request) {
         return userService.create(request)
                 .map(user -> ResponseEntity.status(HttpStatus.CREATED).body(user));
+    }
+
+    @GetMapping("/users/names/others")
+    @PreAuthorize("hasRole('USER')")
+    public Flux<UserResponse> getNamesOfOtherUsers(Authentication authentication) {
+        return userService.getUsersByLogin(authentication.getName());
     }
 
     @GetMapping("/users/login")

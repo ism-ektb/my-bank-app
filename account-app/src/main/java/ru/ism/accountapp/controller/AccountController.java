@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.accountapp.domain.Currency;
+import ru.ism.accountapp.dto.ApiDtos;
 import ru.ism.accountapp.dto.ApiDtos.AccountCreateRequest;
 import ru.ism.accountapp.dto.ApiDtos.AccountResponse;
 import ru.ism.accountapp.dto.ApiDtos.BalanceChangeRequest;
@@ -56,12 +57,35 @@ public class AccountController {
                 .map(ResponseEntity::ok);
     }
 
-    @PatchMapping("/accounts/{id}/balance")
-    public Mono<ResponseEntity<AccountResponse>> changeBalance(
-            @PathVariable Long id,
-            @Valid @RequestBody BalanceChangeRequest request
-    ) {
-        return accountService.changeBalance(id, request.delta())
-                .map(ResponseEntity::ok);
+    @PutMapping("/users/accounts/add")
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
+    public Mono<Void> addBalance(@RequestBody BalanceChangeRequest request, Authentication authentication) {
+        return accountService.addBalance(authentication.getName(), request.currency(), request.delta());
+
     }
+
+    @PutMapping("/users/accounts/reduce")
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
+    public Mono<Void> reduceBalance(@RequestBody BalanceChangeRequest request, Authentication authentication) {
+        return accountService.reduceBalance(authentication.getName(), request.currency(), request.delta());
+    }
+
+    @PutMapping("/users/accounts/convert")
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
+    public Mono<Void> convertBalance(@RequestBody ApiDtos.ConvertRequest request, Authentication authentication) {
+        return accountService.convertBalance(
+                request.toCurrency(),
+                request.toSum(),
+                request.fromSum(),
+                request.fromCurrency(),
+                authentication.getName());
+    }
+
+    @PutMapping("/users/accounts/transfer")
+    @PreAuthorize("hasRole('USER') && hasAuthority('account_write')")
+    public Mono<Void> transfer(@RequestBody ApiDtos.TransferRequest request, Authentication authentication){
+        return accountService.transferBalance(authentication.getName(), request.toLogin(), request.currency(), request.sum());
+    }
+
+
 }

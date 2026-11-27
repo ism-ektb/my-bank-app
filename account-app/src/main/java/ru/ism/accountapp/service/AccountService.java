@@ -2,6 +2,7 @@ package ru.ism.accountapp.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -56,7 +57,7 @@ public class AccountService {
                             }
                         })
 
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"))));
+                        .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"))));
     }
 
     public Mono<Void> deleteForUser(String userLogin, Currency currency) {
@@ -81,31 +82,136 @@ public class AccountService {
                 .map(AccountResponse::from);
     }
 
-    public Mono<AccountResponse> changeBalance(Long accountId, BigDecimal delta) {
-        return accountRepository.findById(accountId)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
-                .flatMap(account -> {
-                    BigDecimal newBalance = account.balance().add(delta);
+    @Transactional
+    public Mono<Void> addBalance(String login, Currency currency, BigDecimal sum) {
+        if (sum == null || sum.signum() <= 0) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be positive"));
+        }
 
-                    if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-                        return Mono.error(new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "Not enough funds on account"
-                        ));
+        return accountRepository.findFirstAccountByUserLoginAndCurrency(login, currency.toString())
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
+                .then(accountRepository.addBalance(login, sum, currency.toString())
+                        .flatMap(updatedRows -> {
+                            if (updatedRows == 1) {
+                                return Mono.empty();
+                            }
+                            if (updatedRows == 0) {
+                                return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+                            }
+                            return Mono.error(new IllegalStateException("More than one account matched the deposit"));
+                        }))
+                .then();
+    }
+
+    @Transactional
+    public Mono<Void> reduceBalance(String login, Currency currency, BigDecimal sum) {
+        if (sum == null || sum.signum() <= 0) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be positive"));
+        }
+
+        return accountRepository.findFirstAccountByUserLoginAndCurrency(login, currency.toString())
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
+                .then(accountRepository.reduceBalance(login, sum, currency.toString())
+                        .flatMap(updatedRows -> {
+                            if (updatedRows == 1) {
+                                return Mono.empty();
+                            }
+                            if (updatedRows == 0) {
+                                return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+                            }
+                            return Mono.error(new IllegalStateException("More than one account matched the deposit"));
+                        }))
+                .then();
+    }
+
+    @Transactional
+    public Mono<Void> transferBalance(
+            String fromLogin,
+            String toLogin,
+            Currency currency,
+            BigDecimal sum
+    ) {
+        if (sum == null || sum.signum() <= 0) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be positive"));
+        }
+        if (fromLogin.equals(toLogin)) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Source and destination accounts must differ"));
+        }
+
+        return Mono.when(
+                        accountRepository.findFirstAccountByUserLoginAndCurrency(fromLogin, currency.toString())
+                                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Source account not found")))
+                                .then(),
+                        accountRepository.findFirstAccountByUserLoginAndCurrency(toLogin, currency.toString())
+                                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Destination account not found")))
+                                .then()
+                )
+                .then(accountRepository.reduceBalance(fromLogin, sum, currency.toString()))
+                .flatMap(withdrawnRows -> {
+                    if (withdrawnRows == 0) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Not enough funds on source account"));
+                    }
+                    if (withdrawnRows != 1) {
+                        return Mono.error(new IllegalStateException("More than one source account matched the transfer"));
                     }
 
-                    Account updated = new Account(
-                            account.id(),
-                            account.userLogin(),
-                            account.number(),
-                            newBalance,
-                            account.currency(),
-                            account.createdAt(),
-                            LocalDateTime.now()
-                    );
+                    return accountRepository.addBalance(toLogin, sum, currency.toString())
+                            .flatMap(creditedRows -> {
+                                if (creditedRows == 1) {
+                                    return Mono.empty();
+                                }
+                                if (creditedRows == 0) {
+                                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Destination account not found"));
+                                }
+                                return Mono.error(new IllegalStateException("More than one destination account matched the transfer"));
+                            });
+                })
+                .then();
+    }
 
-                    return accountRepository.save(updated)
-                            .map(AccountResponse::from);
-                });
+    @Transactional
+    public Mono<Void> convertBalance(
+            Currency toCurrency,
+            BigDecimal toSum,
+            BigDecimal fromSum,
+            Currency fromCurrency,
+            String login
+    ) {
+        if (toSum == null || toSum.signum() <= 0 || fromSum == null || fromSum.signum() <= 0) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amounts must be positive"));
+        }
+        if (toCurrency == fromCurrency) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Currencies must differ"));
+        }
+
+        return Mono.when(
+                        accountRepository.findFirstAccountByUserLoginAndCurrency(login, fromCurrency.toString())
+                                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Source account not found")))
+                                .then(),
+                        accountRepository.findFirstAccountByUserLoginAndCurrency(login, toCurrency.toString())
+                                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Destination account not found")))
+                                .then()
+                )
+                .then(accountRepository.reduceBalance(login, fromSum, fromCurrency.toString()))
+                .flatMap(withdrawnRows -> {
+                    if (withdrawnRows == 0) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Not enough funds on source account"));
+                    }
+                    if (withdrawnRows != 1) {
+                        return Mono.error(new IllegalStateException("More than one source account matched the conversion"));
+                    }
+
+                    return accountRepository.addBalance(login, toSum, toCurrency.toString())
+                            .flatMap(creditedRows -> {
+                                if (creditedRows == 1) {
+                                    return Mono.empty();
+                                }
+                                if (creditedRows == 0) {
+                                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Destination account not found"));
+                                }
+                                return Mono.error(new IllegalStateException("More than one destination account matched the conversion"));
+                            });
+                })
+                .then();
     }
 }
